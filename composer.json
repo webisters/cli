@@ -1,0 +1,68 @@
+{
+    "name": "webisters/cli",
+    "description": "Webisters CLI Library",
+    "license": "MIT",
+    "type": "library",
+    "keywords": [
+        "cli",
+        "console",
+        "terminal",
+        "cron",
+        "command",
+        "commands"
+    ],
+    "authors": [
+        {
+            "name": "Hafiz Muhammad Moaz",
+            "email": "hafizmoazkhalid@gmail.com",
+            "homepage": "https://github.com/HafizMMoaz"
+        }
+    ],
+    "homepage": "https://webisters.com/packages/cli",
+    "support": {
+        "email": "support@webisters.com",
+        "issues": "https://github.com/webisters/cli/issues",
+        "forum": "https://github.com/webisters/forum",
+        "source": "https://github.com/webisters/cli",
+        "docs": "https://webisters.com"
+    },
+    "funding": [
+        {
+            "type": "Webisters Sponsor",
+            "url": "https://webisters.com/sponsor"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "webisters/language": "*"
+    },
+    "require-dev": {
+        "webisters/coding-standard": "*",
+        "jetbrains/phpstorm-attributes": "^1.0",
+        "phpunit/phpunit": "^10.5"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Framework\\CLI\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\CLI\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "3.x-dev"
+        }
+    }
+}
+
+

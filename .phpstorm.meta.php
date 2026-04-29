@@ -1,0 +1,99 @@
+<?php
+/*
+ * This file is part of Webisters CLI Library.
+ *
+ * (c) Hafiz Muhammad Moaz <thewebisters@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+namespace PHPSTORM_META;
+
+registerArgumentsSet(
+    'cli_foreground_colors',
+    'black',
+    'blue',
+    'bright_black',
+    'bright_blue',
+    'bright_cyan',
+    'bright_green',
+    'bright_magenta',
+    'bright_red',
+    'bright_white',
+    'bright_yellow',
+    'cyan',
+    'green',
+    'magenta',
+    'red',
+    'white',
+    'yellow',
+);
+registerArgumentsSet(
+    'cli_background_colors',
+    'black',
+    'blue',
+    'bright_black',
+    'bright_blue',
+    'bright_cyan',
+    'bright_green',
+    'bright_magenta',
+    'bright_red',
+    'bright_yellow',
+    'cyan',
+    'green',
+    'magenta',
+    'red',
+    'white',
+    'yellow',
+);
+registerArgumentsSet(
+    'cli_formats',
+    'bold',
+    'conceal',
+    'crossed_out',
+    'doubly_underline',
+    'encircled',
+    'faint',
+    'fraktur',
+    'italic',
+    'primary_font',
+    'rapid_blink',
+    'reverse_video',
+    'slow_blink',
+    'underline',
+);
+expectedArguments(
+    \Framework\CLI\CLI::box(),
+    1,
+    argumentsSet('cli_background_colors')
+);
+expectedArguments(
+    \Framework\CLI\CLI::box(),
+    2,
+    argumentsSet('cli_foreground_colors')
+);
+expectedArguments(
+    \Framework\CLI\CLI::write(),
+    1,
+    argumentsSet('cli_foreground_colors')
+);
+expectedArguments(
+    \Framework\CLI\CLI::write(),
+    2,
+    argumentsSet('cli_background_colors')
+);
+expectedArguments(
+    \Framework\CLI\CLI::style(),
+    1,
+    argumentsSet('cli_foreground_colors')
+);
+expectedArguments(
+    \Framework\CLI\CLI::style(),
+    2,
+    argumentsSet('cli_background_colors')
+);
+/*expectedArguments(
+    \Framework\CLI\CLI::style(),
+    3,
+    argumentsSet('cli_formats')
+);*/

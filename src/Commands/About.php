@@ -1,0 +1,37 @@
+<?php declare(strict_types=1);
+/*
+ * This file is part of Webisters CLI Library.
+ *
+ * (c) Hafiz Muhammad Moaz <thewebisters@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+namespace Framework\CLI\Commands;
+
+use Framework\CLI\CLI;
+use Framework\CLI\Command;
+use Framework\CLI\Styles\ForegroundColor;
+
+/**
+ * Class About.
+ *
+ * @package cli
+ */
+class About extends Command
+{
+    public function run() : void
+    {
+        $lang = $this->console->getLanguage();
+        CLI::write($lang->render('cli', 'about.line1'), ForegroundColor::brightGreen);
+        CLI::write($lang->render('cli', 'about.line2'));
+        CLI::write($lang->render('cli', 'about.line3'));
+        CLI::write($lang->render('cli', 'about.line4'));
+        CLI::write($lang->render('cli', 'about.line5'));
+    }
+
+    public function getDescription() : string
+    {
+        return $this->console->getLanguage()->render('cli', 'about.description');
+    }
+}
