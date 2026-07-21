@@ -67,8 +67,20 @@ class CLI
      */
     public static function path(string ...$segments) : string
     {
-        $segments = \array_map(static fn (string $segment) => \trim($segment, '/\\'), $segments);
-        return \implode(\DIRECTORY_SEPARATOR, $segments);
+        $parts = [];
+        $first = true;
+        foreach ($segments as $segment) {
+            if ($segment === '') {
+                continue;
+            }
+            // Preserve the leading separator of the first segment so absolute
+            // paths (e.g. "/home/user" on Linux) stay absolute; only trim the
+            // trailing separator there. Interior segments are trimmed on both
+            // sides to avoid duplicated separators.
+            $parts[] = $first ? \rtrim($segment, '/\\') : \trim($segment, '/\\');
+            $first = false;
+        }
+        return \implode(\DIRECTORY_SEPARATOR, $parts);
     }
 
     /**
