@@ -52,7 +52,7 @@ class CLI
                 || \getenv('WT_SESSION') !== false
                 || \getenv('TERM_PROGRAM') === 'vscode'
                 || (\function_exists('sapi_windows_vt100_support')
-                    && \sapi_windows_vt100_support(\STDOUT));
+                    && sapi_windows_vt100_support(\STDOUT));
         }
 
         return true;
