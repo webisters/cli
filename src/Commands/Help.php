@@ -106,8 +106,8 @@ class Help extends Command
 
     protected function sortOptions(string $text) : string
     {
-        $text = \trim(\preg_replace('/\s+/', '', $text));
-        $text = \explode(',', $text);
+        $cleaned = \preg_replace('/\s+/', '', $text);
+        $text = \explode(',', \is_string($cleaned) ? $cleaned : '');
         \sort($text);
         return \implode(',', $text);
     }

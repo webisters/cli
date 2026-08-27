@@ -361,6 +361,9 @@ abstract class Command
                 continue;
             }
             $type = $definition['type'] ?? 'string';
+            if (!\is_string($type)) {
+                $type = 'string';
+            }
             if ($type === 'string' || !\is_string($value)) {
                 continue;
             }
