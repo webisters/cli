@@ -65,13 +65,13 @@ class CLI
                 || \getenv('WT_SESSION') !== false
                 || \getenv('TERM_PROGRAM') === 'vscode'
                 || (\function_exists('sapi_windows_vt100_support')
-                    && sapi_windows_vt100_support(\STDOUT));
+                    && \sapi_windows_vt100_support(\STDOUT));
         }
 
         return true;
     }
 
-/**
+    /**
      * Enable or disable ANSI escape sequences.
      *
      * @param bool $enabled Whether to enable ANSI
@@ -101,6 +101,7 @@ class CLI
     {
         return static::$quiet;
     }
+
     /**
      * Join path segments using the current platform separator.
      *

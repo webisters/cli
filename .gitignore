@@ -14,3 +14,5 @@ phpunit.xml
 jqprog.txt
 
 clitest.log
+
+merge*.log
