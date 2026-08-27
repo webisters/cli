@@ -332,4 +332,27 @@ final class ConsoleTest extends TestCase
         self::assertNotNull($this->console->getCommand('ls'));
         self::assertNotNull($this->console->getCommand('list'));
     }
+
+    public function testAutoHelpLongOption() : void
+    {
+        $this->console->prepare([
+            'file.php',
+            'index',
+            '--help',
+        ]);
+        $this->console->run();
+        self::assertStringContainsString('Usage', Stdout::getContents());
+        self::assertStringContainsString('index', Stdout::getContents());
+    }
+
+    public function testAutoHelpShortOption() : void
+    {
+        $this->console->prepare([
+            'file.php',
+            'index',
+            '-h',
+        ]);
+        $this->console->run();
+        self::assertStringContainsString('Usage', Stdout::getContents());
+    }
 }

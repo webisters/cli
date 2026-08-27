@@ -267,6 +267,17 @@ class Console
     }
 
     /**
+     * Get the current command name.
+     *
+     * @return string
+     */
+    #[Pure]
+    public function getCommandName() : string
+    {
+        return $this->command;
+    }
+
+    /**
      * Run the Console.
      */
     public function run() : void
@@ -274,12 +285,26 @@ class Console
         if ($this->command === '') {
             $this->command = 'index';
         }
+        if ($this->isHelpRequested()) {
+            (new Help($this))->run();
+            return;
+        }
         $command = $this->getCommand($this->command);
         if ($command === null) {
             $this->commandNotFound($this->command);
             return;
         }
         $command->run();
+    }
+
+    /**
+     * Tells if the user asked for help via the -h or --help option.
+     *
+     * @return bool
+     */
+    protected function isHelpRequested() : bool
+    {
+        return $this->getOption('help') === true || $this->getOption('h') === true;
     }
 
     /**
