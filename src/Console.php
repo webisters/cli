@@ -423,6 +423,23 @@ class Console
             //$endOptions = true;
             $this->arguments[] = $value;
         }
+        $this->applyGlobalOptions();
+    }
+
+    /**
+     * Apply the console wide options like quiet mode and disabling ANSI colors.
+     */
+    protected function applyGlobalOptions() : void
+    {
+        if (isset($this->options['no-ansi'])) {
+            CLI::setAnsi(false);
+            unset($this->options['no-ansi']);
+        }
+        if ((isset($this->options['quiet']) && $this->options['quiet'] === true)
+            || (isset($this->options['q']) && $this->options['q'] === true)) {
+            CLI::setQuiet(true);
+            unset($this->options['quiet'], $this->options['q']);
+        }
     }
 
     /**

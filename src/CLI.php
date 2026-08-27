@@ -28,6 +28,16 @@ class CLI
     protected static string $reset = "\033[0m";
 
     /**
+     * Tells if ANSI escape sequences are enabled.
+     */
+    protected static bool $ansi = true;
+
+    /**
+     * Tells if normal output should be suppressed.
+     */
+    protected static bool $quiet = false;
+
+    /**
      * Tells if it is running on a Windows OS.
      *
      * @return bool
@@ -46,6 +56,9 @@ class CLI
     #[Pure]
     public static function supportsAnsi() : bool
     {
+        if (!static::$ansi) {
+            return false;
+        }
         // Windows 10+ supports ANSI in most terminals.
         if (\DIRECTORY_SEPARATOR === '\\') {
             return \getenv('ANSICON') !== false
@@ -58,6 +71,36 @@ class CLI
         return true;
     }
 
+/**
+     * Enable or disable ANSI escape sequences.
+     *
+     * @param bool $enabled Whether to enable ANSI
+     */
+    public static function setAnsi(bool $enabled) : void
+    {
+        static::$ansi = $enabled;
+    }
+
+    /**
+     * Enable or disable quiet mode.
+     *
+     * @param bool $quiet Whether to suppress normal output
+     */
+    public static function setQuiet(bool $quiet) : void
+    {
+        static::$quiet = $quiet;
+    }
+
+    /**
+     * Tells if quiet mode is enabled.
+     *
+     * @return bool
+     */
+    #[Pure]
+    public static function isQuiet() : bool
+    {
+        return static::$quiet;
+    }
     /**
      * Join path segments using the current platform separator.
      *
@@ -200,6 +243,9 @@ class CLI
         BackgroundColor | string | null $background = null,
         ?int $width = null
     ) : void {
+        if (static::isQuiet()) {
+            return;
+        }
         if ($width !== null) {
             $text = static::wrap($text, $width);
         }
@@ -236,6 +282,9 @@ class CLI
      */
     public static function newLine(int $lines = 1) : void
     {
+        if (static::isQuiet()) {
+            return;
+        }
         for ($i = 0; $i < $lines; $i++) {
             \fwrite(\STDOUT, \PHP_EOL);
         }
@@ -440,6 +489,9 @@ class CLI
      */
     public static function table(array $tbody, array $thead = []) : void
     {
+        if (static::isQuiet()) {
+            return;
+        }
         // All the rows in the table will be here until the end
         $tableRows = [];
         // We need only indexes and not keys
