@@ -9,6 +9,7 @@
  */
 namespace Tests\CLI;
 
+use Framework\CLI\CLI;
 use Framework\CLI\Command;
 use Framework\CLI\Streams\Stderr;
 use Framework\CLI\Streams\Stdout;
@@ -354,5 +355,31 @@ final class ConsoleTest extends TestCase
         ]);
         $this->console->run();
         self::assertStringContainsString('Usage', Stdout::getContents());
+    }
+
+    public function testQuietOption() : void
+    {
+        CLI::setQuiet(false);
+        $this->console->prepare([
+            'file.php',
+            'index',
+            '--quiet',
+        ]);
+        self::assertTrue(CLI::isQuiet());
+        self::assertArrayNotHasKey('quiet', $this->console->getOptions());
+        CLI::setQuiet(false);
+    }
+
+    public function testNoAnsiOption() : void
+    {
+        CLI::setAnsi(true);
+        $this->console->prepare([
+            'file.php',
+            'index',
+            '--no-ansi',
+        ]);
+        self::assertFalse(CLI::supportsAnsi());
+        self::assertArrayNotHasKey('no-ansi', $this->console->getOptions());
+        CLI::setAnsi(true);
     }
 }

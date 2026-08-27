@@ -224,4 +224,25 @@ final class CLITest extends TestCase
             . ' sem lacus, rutrum vel neque eu, aliquam aliquet neque.');
         self::assertStringContainsString('Lorem', Stdout::getContents());
     }
+
+    public function testQuietMode() : void
+    {
+        CLI::setQuiet(true);
+        CLI::write('Silenced!');
+        CLI::newLine(2);
+        CLI::table([[1, 'John']]);
+        self::assertSame('', Stdout::getContents());
+        CLI::setQuiet(false);
+    }
+
+    public function testNoAnsi() : void
+    {
+        CLI::setAnsi(false);
+        self::assertFalse(CLI::supportsAnsi());
+        self::assertSame(
+            'foo',
+            CLI::style('foo', ForegroundColor::red, BackgroundColor::blue)
+        );
+        CLI::setAnsi(true);
+    }
 }
