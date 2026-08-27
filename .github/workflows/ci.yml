@@ -83,3 +83,10 @@ jobs:
           else
             echo "php-cs-fixer not installed; skipping."
           fi
+      - name: Static analysis
+        run: |
+          if [ -f vendor/bin/phpstan ]; then
+            vendor/bin/phpstan analyse --no-progress
+          else
+            echo "phpstan not installed; skipping."
+          fi
