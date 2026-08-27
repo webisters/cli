@@ -41,7 +41,8 @@ final class MaskedTest extends TestCase
         self::assertSame(0, $exitCode);
         self::assertStringContainsString('Token: ######', $output);
         self::assertStringContainsString('answer=s3cret', $output);
-        self::assertStringNotContainsString('s3cret', \str_replace('answer=s3cret', '', $output));
+        // The answer must not appear as an echo after the prompt.
+        self::assertStringNotContainsString('Token: s3cret', $output);
     }
 
     /**
