@@ -23,6 +23,10 @@ class Index extends Command
     protected string $name = 'index';
     protected string $description = 'Show commands list';
     protected string $usage = 'index';
+    protected array $aliases = [
+        'ls',
+        'list',
+    ];
     protected array $options = [
         '-g' => 'Shows greeting.',
     ];

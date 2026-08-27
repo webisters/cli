@@ -15,6 +15,7 @@ return [
     'about.line4' => 'Visite nosso website para saber mais: https://webisters.com',
     'about.line5' => 'Obrigado por usar o Webisters!',
     'availableCommands' => 'Comandos Disponíveis',
+    'aliases' => 'Aliases',
     'command' => 'Comando',
     'commandNotFound' => 'Comando não encontrado: "{0}"',
     'commands' => 'Comandos',

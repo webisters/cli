@@ -201,6 +201,11 @@ class Console
         if (isset($this->commands[$name]) && $this->commands[$name]->isActive()) {
             return $this->commands[$name];
         }
+        foreach ($this->commands as $command) {
+            if (\in_array($name, $command->getAliases(), true) && $command->isActive()) {
+                return $command;
+            }
+        }
         return null;
     }
 

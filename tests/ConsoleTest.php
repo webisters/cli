@@ -306,4 +306,30 @@ final class ConsoleTest extends TestCase
             )
         );
     }
+
+    public function testCommandAlias() : void
+    {
+        $command = new CommandMock($this->console);
+        $command->setAliases(['t', 'testcmd']);
+        $this->console->addCommand($command);
+        self::assertSame($command, $this->console->getCommand('t'));
+        self::assertSame($command, $this->console->getCommand('testcmd'));
+        self::assertTrue($this->console->hasCommand('t'));
+    }
+
+    public function testRunCommandByAlias() : void
+    {
+        $command = new CommandMock($this->console);
+        $command->setAliases(['t']);
+        $this->console->addCommand($command);
+        Stdout::reset();
+        $this->console->exec('t --option=foo -o argument0 argument1');
+        self::assertSame($this->getContentsOfCommandMock(), Stdout::getContents());
+    }
+
+    public function testIndexAliases() : void
+    {
+        self::assertNotNull($this->console->getCommand('ls'));
+        self::assertNotNull($this->console->getCommand('list'));
+    }
 }

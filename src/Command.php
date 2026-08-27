@@ -35,6 +35,12 @@ abstract class Command
      */
     protected string $description;
     /**
+     * Command aliases.
+     *
+     * @var array<int,string>
+     */
+    protected array $aliases = [];
+    /**
      * Command usage.
      */
     protected string $usage = 'command [options] -- [arguments]';
@@ -171,6 +177,30 @@ abstract class Command
     public function setDescription(string $description) : static
     {
         $this->description = $description;
+        return $this;
+    }
+
+    /**
+     * Get command aliases.
+     *
+     * @return array<int,string>
+     */
+    #[Pure]
+    public function getAliases() : array
+    {
+        return $this->aliases;
+    }
+
+    /**
+     * Set command aliases.
+     *
+     * @param array<int,string> $aliases
+     *
+     * @return static
+     */
+    public function setAliases(array $aliases) : static
+    {
+        $this->aliases = \array_values($aliases);
         return $this;
     }
 
