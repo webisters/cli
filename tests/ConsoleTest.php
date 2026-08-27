@@ -242,6 +242,41 @@ final class ConsoleTest extends TestCase
         );
     }
 
+    public function testRunWithSuggestion() : void
+    {
+        $this->console->prepare([
+            'file.php',
+            'hepl',
+        ]);
+        Stderr::reset();
+        Stderr::init();
+        $this->console->run();
+        self::assertStringContainsString(
+            'Command not found: "hepl"',
+            Stderr::getContents()
+        );
+        self::assertStringContainsString(
+            'Did you mean "help"?',
+            Stderr::getContents()
+        );
+    }
+
+    public function testUnknownFarCommandHasNoSuggestion() : void
+    {
+        $this->console->prepare([
+            'file.php',
+            'zzzzzzzzzz',
+        ]);
+        Stderr::reset();
+        Stderr::init();
+        $this->console->run();
+        self::assertStringContainsString(
+            'Command not found: "zzzzzzzzzz"',
+            Stderr::getContents()
+        );
+        self::assertStringNotContainsString('Did you mean', Stderr::getContents());
+    }
+
     protected function getContentsOfCommandMock() : string
     {
         return \print_r(['option' => 'foo', 'o' => 1], true) . \PHP_EOL

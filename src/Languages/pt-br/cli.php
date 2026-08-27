@@ -19,6 +19,7 @@ return [
     'commandNotFound' => 'Comando não encontrado: "{0}"',
     'commands' => 'Comandos',
     'description' => 'Descrição',
+    'didYouMean' => 'Você quis dizer "{0}"?',
     'friend' => 'amigo',
     'greet.afternoon' => 'Boa tarde, {0}!',
     'greet.evening' => 'Boa noite, {0}!',
