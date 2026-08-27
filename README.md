@@ -31,6 +31,56 @@ Discovers, registers and runs commands:
 - Unknown commands fall back to `Index` (which lists available commands) and suggest the closest matching command name
 - `getArgument()`, `getArguments()`, `getOption()` and `getOptions()` expose the parsed command line
 
+## Output and Color Helpers
+
+All output helpers live on the static `Framework\CLI\CLI` class and write to STDOUT. Colors are emitted only when the terminal supports ANSI; use `CLI::setAnsi(false)` to force plain output.
+
+### Writing text
+
+```php
+use Framework\CLI\CLI;
+use Framework\CLI\Styles\BackgroundColor;
+use Framework\CLI\Styles\ForegroundColor;
+use Framework\CLI\Styles\Format;
+
+CLI::write('Plain text');
+CLI::write('Colored text', ForegroundColor::green);
+CLI::write('On a red background', null, BackgroundColor::red);
+CLI::write('Wrapped to 40 columns', null, null, 40);
+
+// Full control with style(): color, background and formats
+CLI::write(CLI::style('Warning!', 'yellow', null, [Format::bold]));
+```
+
+Colors and formats can be passed as enum cases or as plain strings, for example `'red'`, `'bright_cyan'`, `'underline'`.
+
+### Convenience shortcuts
+
+```php
+CLI::success('Task completed');  // green
+CLI::info('Just so you know');   // blue
+CLI::error('Something broke');   // red, then exits with code 1
+```
+
+### Reading input
+
+```php
+$name    = CLI::getInput('Name: ');
+$answer  = CLI::prompt('Continue?', ['y', 'n']); // repeats until a valid option is given
+$token   = CLI::secret('Token: ');               // hidden input
+```
+
+### Live output
+
+```php
+foreach ($items as $i => $item) {
+    // process $item ...
+    CLI::progress($i + 1, \count($items), 'Importing');
+}
+CLI::spinner(); // spin one frame while waiting
+CLI::newLine();
+```
+
 ## Creating a Custom Command
 
 1. Create a command by extending `Framework\CLI\Command` and implementing `run()`:
