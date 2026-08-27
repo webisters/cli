@@ -36,7 +36,7 @@ final class MaskedTest extends TestCase
             $answer = CLI::masked('Token', '#');
             \fwrite(\STDOUT, 'answer=' . $answer);
             PHP;
-        [$exitCode, $output] = $this->runScript($script, 'pty', 's3cret');
+        [$exitCode, $output] = $this->runScript($script, 's3cret', 'pty');
         $output = \str_replace("\r", '', $output);
         self::assertSame(0, $exitCode);
         self::assertStringContainsString('Token: ######', $output);
@@ -59,7 +59,7 @@ final class MaskedTest extends TestCase
             $answer = CLI::masked('Token', '#');
             \fwrite(\STDOUT, 'answer=' . $answer);
             PHP;
-        [$exitCode, $output] = $this->runScript($script, 'pipe', 's3cret');
+        [$exitCode, $output] = $this->runScript($script, 's3cret', 'pipe');
         $output = \str_replace("\r", '', $output);
         self::assertSame(0, $exitCode);
         self::assertStringNotContainsString('######', $output);
@@ -87,7 +87,7 @@ final class MaskedTest extends TestCase
 
         $php = \PHP_BINARY . ' ' . \escapeshellarg($file);
         if ($mode === 'pty') {
-            $command = 'printf %s\\\\n ' . \escapeshellarg($stdin)
+            $command = 'printf %s\\\n ' . \escapeshellarg($stdin)
                 . ' | script -qec ' . \escapeshellarg($php) . ' /dev/null 2>&1';
         } else {
             $command = 'echo ' . \escapeshellarg($stdin) . ' | ' . $php . ' 2>&1';
