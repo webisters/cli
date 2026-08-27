@@ -16,3 +16,5 @@ jqprog.txt
 clitest.log
 
 merge*.log
+*.log
+
