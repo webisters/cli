@@ -25,9 +25,13 @@ class Help extends Command
 
     public function run() : void
     {
-        $commandName = $this->console->getArgument(0)
-            ?? $this->console->getCommandName()
-            ?? 'help';
+        $commandName = $this->console->getArgument(0);
+        if ($commandName === null || $commandName === '') {
+            $commandName = $this->console->getCommandName();
+        }
+        if ($commandName === '') {
+            $commandName = 'help';
+        }
         $this->showCommand($commandName);
     }
 
