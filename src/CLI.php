@@ -65,7 +65,7 @@ class CLI
                 || \getenv('WT_SESSION') !== false
                 || \getenv('TERM_PROGRAM') === 'vscode'
                 || (\function_exists('sapi_windows_vt100_support')
-                    && sapi_windows_vt100_support(\STDOUT));
+                    && \sapi_windows_vt100_support(\STDOUT));
         }
 
         return true;
@@ -389,7 +389,7 @@ class CLI
         if (!\defined('SIGINT')) {
             return false;
         }
-        return static::onSignal(\SIGINT, $handler);
+        return static::onSignal(SIGINT, $handler);
     }
 
     /**
@@ -404,7 +404,7 @@ class CLI
         if (!\function_exists('pcntl_signal')) {
             return false;
         }
-        return pcntl_signal($signal, \SIG_DFL);
+        return pcntl_signal($signal, SIG_DFL);
     }
 
     /**
