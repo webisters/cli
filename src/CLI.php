@@ -362,6 +362,52 @@ class CLI
     }
 
     /**
+     * Register a handler for the given POSIX signal when pcntl is available.
+     *
+     * @param int $signal The signal number
+     * @param callable $handler The signal handler
+     *
+     * @return bool True if the handler was registered, false if pcntl is unavailable
+     */
+    public static function onSignal(int $signal, callable $handler) : bool
+    {
+        if (!\function_exists('pcntl_signal')) {
+            return false;
+        }
+        return \pcntl_signal($signal, $handler, true);
+    }
+
+    /**
+     * Register a cleanup handler for the interrupt signal (Ctrl+C) when available.
+     *
+     * @param callable $handler The signal handler
+     *
+     * @return bool True if the handler was registered
+     */
+    public static function onSigint(callable $handler) : bool
+    {
+        if (!\defined('SIGINT')) {
+            return false;
+        }
+        return static::onSignal(\SIGINT, $handler);
+    }
+
+    /**
+     * Restore the default handler for a POSIX signal when pcntl is available.
+     *
+     * @param int $signal The signal number
+     *
+     * @return bool True if the handler was restored
+     */
+    public static function restoreSignal(int $signal) : bool
+    {
+        if (!\function_exists('pcntl_signal')) {
+            return false;
+        }
+        return \pcntl_signal($signal, \SIG_DFL);
+    }
+
+    /**
      * Performs audible beep alarms.
      *
      * @param int $times How many times should the beep be played
