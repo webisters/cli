@@ -1,5 +1,7 @@
 # Webisters CLI
 
+[![CI](https://github.com/webisters/cli/actions/workflows/ci.yml/badge.svg)](https://github.com/webisters/cli/actions/workflows/ci.yml)
+
 Webisters CLI Library This library is designed for reuse in Composer-based PHP applications.
 
 ## What It Provides
