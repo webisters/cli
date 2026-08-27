@@ -18,13 +18,17 @@ use PHPUnit\Framework\TestCase;
 final class MaskedTest extends TestCase
 {
     /**
-     * Runs masked() in a real POSIX subprocess: each typed character must be
-     * echoed as the mask character and the real answer returned.
+     * Runs masked() in a real POSIX subprocess on a pty: each typed character
+     * must be echoed as the mask character and the real answer returned.
      */
     public function testMaskedEchoesMaskCharactersOnPosix() : void
     {
         if (CLI::isWindows()) {
             self::markTestSkipped('Requires a POSIX terminal for stty based masking.');
+        }
+        \exec('command -v script 2>/dev/null', $check, $found);
+        if ($found !== 0 || $check === []) {
+            self::markTestSkipped('The script command is required to emulate a TTY.');
         }
         $script = <<<'PHP'
             use Framework\CLI\CLI;
@@ -32,28 +36,34 @@ final class MaskedTest extends TestCase
             $answer = CLI::masked('Token', '#');
             \fwrite(\STDOUT, 'answer=' . $answer);
             PHP;
-        [$exitCode, $output] = $this->runScript($script, "s3cret\n");
+        [$exitCode, $output] = $this->runScript($script, 'pty', 's3cret');
+        $output = \str_replace("\r", '', $output);
         self::assertSame(0, $exitCode);
         self::assertStringContainsString('Token: ######', $output);
         self::assertStringContainsString('answer=s3cret', $output);
         self::assertStringNotContainsString('s3cret', \str_replace('answer=s3cret', '', $output));
     }
 
-    public function testMaskedCustomMaskCharacter() : void
+    /**
+     * Without a TTY, masked() reads the line normally: the answer is
+     * returned but no mask characters are echoed.
+     */
+    public function testMaskedWithoutTtyFallsBackToPlainRead() : void
     {
         if (CLI::isWindows()) {
-            self::markTestSkipped('Requires a POSIX terminal for stty based masking.');
+            self::markTestSkipped('Requires a POSIX pipe for the no TTY fallback.');
         }
         $script = <<<'PHP'
             use Framework\CLI\CLI;
 
-            $answer = CLI::masked('Pin', 'x');
+            $answer = CLI::masked('Token', '#');
             \fwrite(\STDOUT, 'answer=' . $answer);
             PHP;
-        [$exitCode, $output] = $this->runScript($script, "1234\n");
+        [$exitCode, $output] = $this->runScript($script, 'pipe', 's3cret');
+        $output = \str_replace("\r", '', $output);
         self::assertSame(0, $exitCode);
-        self::assertStringContainsString('Pin: xxxx', $output);
-        self::assertStringContainsString('answer=1234', $output);
+        self::assertStringNotContainsString('######', $output);
+        self::assertStringContainsString('answer=s3cret', $output);
     }
 
     /**

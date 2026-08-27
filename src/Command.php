@@ -333,11 +333,10 @@ abstract class Command
      */
     public function validate(array $arguments, array $options) : array
     {
-        $errors = \array_merge(
+        return \array_merge(
             $this->validateDefinitions($this->argumentDefinitions, $arguments, 'argument'),
             $this->validateDefinitions($this->optionDefinitions, $options, 'option')
         );
-        return $errors;
     }
 
     /**

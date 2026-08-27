@@ -590,25 +590,32 @@ class CLI
     {
         $question .= ': ';
         \fwrite(\STDOUT, $question);
-        if (static::isWindows() || !\function_exists('shell_exec')) {
+        if (static::isWindows()
+            || !\function_exists('shell_exec')
+            || !\function_exists('stream_isatty')
+            || !\stream_isatty(\STDIN)
+        ) {
+            // Without an interactive TTY the echo cannot be controlled,
+            // so fall back to a plain line read.
             return \trim((string) \fgets(\STDIN));
         }
-        @\shell_exec('stty -echo');
+        @\shell_exec('stty -echo 2>/dev/null');
         $answer = '';
         try {
             while (true) {
                 $char = \fgetc(\STDIN);
-                if ($char === false || $char === "\n") {
+                $code = $char === false ? 0 : \ord($char);
+                if ($char === false || $code === 10) {
                     break;
                 }
-                if ($char === "\r") {
+                if ($code === 13) {
                     // consume the \n that follows on Windows-style line endings
                     \fgetc(\STDIN);
                     break;
                 }
-                if ($char === "\x7f" || $char === '\\b') {
+                if ($code === 127 || $code === 8) {
                     $answer = \substr($answer, 0, -1);
-                    \fwrite(\STDOUT, '\\b \\b');
+                    \fwrite(\STDOUT, \chr(8) . ' ' . \chr(8));
                     continue;
                 }
                 $answer .= $char;
@@ -617,7 +624,7 @@ class CLI
             \fwrite(\STDOUT, \PHP_EOL);
             return $answer;
         } finally {
-            @\shell_exec('stty echo');
+            @\shell_exec('stty echo 2>/dev/null');
         }
     }
 
