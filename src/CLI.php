@@ -317,6 +317,51 @@ class CLI
     }
 
     /**
+     * Render a progress bar using a live line.
+     *
+     * @param int $step Current step, starting from zero
+     * @param int $total Total number of steps
+     * @param string $label Optional leading label
+     */
+    public static function progress(int $step, int $total, string $label = '') : void
+    {
+        if (static::isQuiet()) {
+            if ($step >= $total && $total > 0) {
+                \fwrite(\STDOUT, \PHP_EOL);
+            }
+            return;
+        }
+        $percent = $total > 0 ? (int) \round($step / $total * 100) : 100;
+        $width = 15;
+        $filled = $total > 0 ? (int) \round($width * $percent / 100) : $width;
+        $bar = \str_repeat('#', $filled) . \str_repeat('-', $width - $filled);
+        $text = (($label !== '') ? $label . ' ' : '') . '[' . $bar . '] ' . $percent . '%';
+        static::liveLine($text, $step >= $total && $total > 0);
+    }
+
+    /**
+     * Render a spinner frame using a live line.
+     *
+     * @param int $frame The frame index, incremented on each call
+     * @param bool $finalize True to clear the spinner and add a new line
+     */
+    public static function spinner(int $frame = 0, bool $finalize = false) : void
+    {
+        if (static::isQuiet()) {
+            if ($finalize) {
+                \fwrite(\STDOUT, \PHP_EOL);
+            }
+            return;
+        }
+        if ($finalize) {
+            static::liveLine('', true);
+            return;
+        }
+        $frames = ['|', '/', '-', '\\'];
+        static::liveLine($frames[$frame % \count($frames)]);
+    }
+
+    /**
      * Performs audible beep alarms.
      *
      * @param int $times How many times should the beep be played

@@ -245,4 +245,25 @@ final class CLITest extends TestCase
         );
         CLI::setAnsi(true);
     }
+
+    public function testProgress() : void
+    {
+        CLI::setAnsi(false);
+        Stdout::reset();
+        CLI::progress(2, 4, 'Task');
+        self::assertStringContainsString('50%', Stdout::getContents());
+        Stdout::reset();
+        CLI::progress(4, 4);
+        self::assertStringContainsString('100%', Stdout::getContents());
+        CLI::setAnsi(true);
+    }
+
+    public function testSpinner() : void
+    {
+        CLI::setAnsi(false);
+        Stdout::reset();
+        CLI::spinner(0);
+        self::assertStringContainsString('|', Stdout::getContents());
+        CLI::setAnsi(true);
+    }
 }
