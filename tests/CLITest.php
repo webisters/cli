@@ -266,4 +266,14 @@ final class CLITest extends TestCase
         self::assertStringContainsString('|', Stdout::getContents());
         CLI::setAnsi(true);
     }
+
+    public function testSignals() : void
+    {
+        $term = \defined('SIGTERM') ? \SIGTERM : 15;
+        self::assertIsBool(CLI::onSignal($term, static function () : void {
+        }));
+        self::assertIsBool(CLI::onSigint(static function () : void {
+        }));
+        self::assertIsBool(CLI::restoreSignal($term));
+    }
 }
