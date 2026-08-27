@@ -12,3 +12,5 @@ phpstan.neon
 phpunit.xml
 
 jqprog.txt
+
+clitest.log

@@ -43,6 +43,13 @@ class Help extends Command
             $this->console->getLanguage()->render('cli', 'command') . ': ',
             ForegroundColor::green
         ) . $command->getName());
+        $value = $command->getAliases();
+        if ($value) {
+            CLI::write(CLI::style(
+                $this->console->getLanguage()->render('cli', 'aliases') . ': ',
+                ForegroundColor::green
+            ) . \implode(', ', $value));
+        }
         $value = $command->getGroup();
         if ($value !== null) {
             CLI::write(CLI::style(

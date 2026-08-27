@@ -14,6 +14,7 @@ return [
     'about.line3' => 'Webisters CLI Library is Open Source Software (OSS).',
     'about.line4' => 'Visit our website to know more: https://webisters.com',
     'about.line5' => 'Thanks for using Webisters!',
+    'aliases' => 'Aliases',
     'availableCommands' => 'Available Commands',
     'command' => 'Command',
     'commandNotFound' => 'Command not found: "{0}"',
