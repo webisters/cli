@@ -67,11 +67,16 @@ final class MaskedTest extends TestCase
     }
 
     /**
-     * Run a script reading from a piped STDIN as a real PHP process.
+     * Run a script as a real PHP process, either with STDIN as a plain pipe
+     * or attached to a pseudo terminal (via the script utility) so stty
+     * based masking can be exercised.
+     *
+     * @param string $stdin The text fed to the script on STDIN
+     * @param string $mode 'pipe' or 'pty'
      *
      * @return array{0:int,1:string}
      */
-    private function runScript(string $code, string $stdin) : array
+    private function runScript(string $code, string $stdin, string $mode = 'pipe') : array
     {
         $autoloader = \dirname(__DIR__) . '/vendor/autoload.php';
         $file = \sys_get_temp_dir() . '/webisters-cli-masked-' . \uniqid() . '.php';
@@ -80,8 +85,13 @@ final class MaskedTest extends TestCase
             '<?php require ' . \var_export($autoloader, true) . ";\n" . $code
         );
 
-        $command = 'echo ' . \escapeshellarg($stdin) . ' | '
-            . \PHP_BINARY . ' ' . \escapeshellarg($file) . ' 2>&1';
+        $php = \PHP_BINARY . ' ' . \escapeshellarg($file);
+        if ($mode === 'pty') {
+            $command = 'printf %s\\\\n ' . \escapeshellarg($stdin)
+                . ' | script -qec ' . \escapeshellarg($php) . ' /dev/null 2>&1';
+        } else {
+            $command = 'echo ' . \escapeshellarg($stdin) . ' | ' . $php . ' 2>&1';
+        }
         \exec($command, $output, $exitCode);
 
         \unlink($file);
