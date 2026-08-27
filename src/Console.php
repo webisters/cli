@@ -295,7 +295,26 @@ class Console
             $this->commandNotFound($this->command);
             return;
         }
+        $errors = $command->validate($this->arguments, $this->options);
+        if ($errors !== []) {
+            $this->validationFailed($errors);
+            return;
+        }
         $command->run();
+    }
+
+    /**
+     * Report argument or option validation errors for the requested command.
+     *
+     * @param array<int,string> $errors The validation error messages
+     */
+    protected function validationFailed(array $errors) : void
+    {
+        $message = \implode(\PHP_EOL, $errors);
+        CLI::error(
+            CLI::style($message, ForegroundColor::brightRed),
+            \defined('TESTING') ? null : 1
+        );
     }
 
     /**

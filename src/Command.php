@@ -51,6 +51,20 @@ abstract class Command
      */
     protected array $options = [];
     /**
+     * Argument definitions.
+     *
+     * @var array<int,array<string,mixed>> Definitions keyed by position, each
+     * with optional "type", "required" and "default" keys
+     */
+    protected array $argumentDefinitions = [];
+    /**
+     * Option definitions.
+     *
+     * @var array<string,array<string,mixed>> Definitions keyed by option name,
+     * each with optional "type", "required" and "default" keys
+     */
+    protected array $optionDefinitions = [];
+    /**
      * Tells if command is active.
      */
     protected bool $active = true;
@@ -250,6 +264,118 @@ abstract class Command
     {
         $this->options = $options;
         return $this;
+    }
+
+    /**
+     * Get argument definitions.
+     *
+     * @return array<int,array<string,mixed>> Definitions keyed by position,
+     * each with optional "type", "required" and "default" keys
+     */
+    #[Pure]
+    public function getArgumentDefinitions() : array
+    {
+        return $this->argumentDefinitions;
+    }
+
+    /**
+     * Set argument definitions.
+     *
+     * @param array<int,array<string,mixed>> $definitions Definitions keyed by
+     * position, each with optional "type", "required" and "default" keys
+     *
+     * @return static
+     */
+    public function setArgumentDefinitions(array $definitions) : static
+    {
+        $this->argumentDefinitions = $definitions;
+        return $this;
+    }
+
+    /**
+     * Get option definitions.
+     *
+     * @return array<string,array<string,mixed>> Definitions keyed by option
+     * name, each with optional "type", "required" and "default" keys
+     */
+    #[Pure]
+    public function getOptionDefinitions() : array
+    {
+        return $this->optionDefinitions;
+    }
+
+    /**
+     * Set option definitions.
+     *
+     * @param array<string,array<string,mixed>> $definitions Definitions keyed
+     * by option name, each with optional "type", "required" and "default" keys
+     *
+     * @return static
+     */
+    public function setOptionDefinitions(array $definitions) : static
+    {
+        $this->optionDefinitions = $definitions;
+        return $this;
+    }
+
+    /**
+     * Validate parsed arguments and options against the definitions.
+     *
+     * Supported types are "string", "int", "float" and "numeric". An argument
+     * or option marked as required must be present. Values declared with a
+     * type are cast when possible and reported as errors when they do not
+     * match.
+     *
+     * @param array<int,string> $arguments The parsed positional arguments
+     * @param array<string,bool|string> $options The parsed options
+     *
+     * @return array<int,string> The validation error messages, empty when valid
+     */
+    public function validate(array $arguments, array $options) : array
+    {
+        $errors = \array_merge(
+            $this->validateDefinitions($this->argumentDefinitions, $arguments, 'argument'),
+            $this->validateDefinitions($this->optionDefinitions, $options, 'option')
+        );
+        return $errors;
+    }
+
+    /**
+     * Validate a set of values against their definitions.
+     *
+     * @param array<int|string,array<string,mixed>> $definitions
+     * @param array<int|string,bool|string> $values
+     * @param string $label Either "argument" or "option", used in messages
+     *
+     * @return array<int,string>
+     */
+    #[Pure]
+    protected function validateDefinitions(array $definitions, array $values, string $label) : array
+    {
+        $errors = [];
+        foreach ($definitions as $key => $definition) {
+            $value = $values[$key] ?? null;
+            if ($value === null || $value === false) {
+                if (!empty($definition['required'])) {
+                    $errors[] = $label . ' "' . $key . '" is required.';
+                }
+                continue;
+            }
+            $type = $definition['type'] ?? 'string';
+            if ($type === 'string' || !\is_string($value)) {
+                continue;
+            }
+            $valid = match ($type) {
+                'int' => (bool) \preg_match('/^-?\d+$/', $value),
+                'float' => \is_numeric($value),
+                'numeric' => \is_numeric($value),
+                default => true,
+            };
+            if (!$valid) {
+                $errors[] = $label . ' "' . $key . '" must be of type ' . $type . '.';
+            }
+        }
+        return $errors;
     }
 
     /**
