@@ -10,3 +10,5 @@ composer.lock
 composer.phar
 phpstan.neon
 phpunit.xml
+
+jqprog.txt

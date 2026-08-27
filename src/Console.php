@@ -271,13 +271,60 @@ class Console
         }
         $command = $this->getCommand($this->command);
         if ($command === null) {
-            CLI::error(CLI::style(
-                $this->getLanguage()->render('cli', 'commandNotFound', [$this->command]),
-                ForegroundColor::brightRed
-            ), \defined('TESTING') ? null : 1);
+            $this->commandNotFound($this->command);
             return;
         }
         $command->run();
+    }
+
+    /**
+     * Handle an unknown command by reporting it and suggesting the closest
+     * registered command when there is a close match.
+     *
+     * @param string $command The unknown command name
+     */
+    protected function commandNotFound(string $command) : void
+    {
+        $message = $this->getLanguage()->render('cli', 'commandNotFound', [$command]);
+        $suggestion = $this->suggestCommand($command);
+        if ($suggestion !== null && $suggestion !== $command) {
+            $message .= \PHP_EOL
+                . $this->getLanguage()->render('cli', 'didYouMean', [$suggestion]);
+        }
+        CLI::error(
+            CLI::style($message, ForegroundColor::brightRed),
+            \defined('TESTING') ? null : 1
+        );
+    }
+
+    /**
+     * Suggest the closest registered command name to a given input using the
+     * Levenshtein distance, or null when no match is close enough.
+     *
+     * @param string $command The unknown command name
+     *
+     * @return string|null The closest command name or null
+     */
+    #[Pure]
+    protected function suggestCommand(string $command) : ?string
+    {
+        if ($command === '') {
+            return null;
+        }
+        $threshold = (int) \strlen($command) / 4 + 1;
+        $best = null;
+        $bestDistance = $threshold + 1;
+        foreach (\array_keys($this->commands) as $candidate) {
+            $distance = \levenshtein($command, $candidate);
+            if ($distance < $bestDistance) {
+                $bestDistance = $distance;
+                $best = $candidate;
+            }
+        }
+        if ($bestDistance > $threshold) {
+            return null;
+        }
+        return $best;
     }
 
     public function exec(string $command) : void
