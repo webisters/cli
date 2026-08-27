@@ -31,6 +31,64 @@ Discovers, registers and runs commands:
 - Unknown commands fall back to `Index` (which lists available commands) and suggest the closest matching command name
 - `getArgument()`, `getArguments()`, `getOption()` and `getOptions()` expose the parsed command line
 
+## Creating a Custom Command
+
+1. Create a command by extending `Framework\CLI\Command` and implementing `run()`:
+
+```php
+<?php
+
+use Framework\CLI\CLI;
+use Framework\CLI\Command;
+
+class GreetCommand extends Command
+{
+    protected string $name = 'greet';
+
+    public function getDescription() : string
+    {
+        return 'Greets the user.';
+    }
+
+    public function getOptions() : array
+    {
+        return ['-s' => 'Shout the greeting.']; // options the command accepts
+    }
+
+    public function run() : void
+    {
+        $name = $this->getConsole()->getArgument(0) ?? 'world';
+        $message = "Hello, {$name}!";
+
+        if ($this->getConsole()->getOption('s')) {
+            $message = \strtoupper($message);
+        }
+
+        CLI::write($message);
+    }
+}
+```
+
+2. Register the command with a `Console` and run it. Pass a Command instance or its class name:
+
+```php
+use Framework\CLI\Console;
+
+$console = new Console();
+$console->addCommand(GreetCommand::class);
+$console->run();
+```
+
+3. Call it from the terminal:
+
+```bash
+php app greet Alice          # Hello, Alice!
+php app greet Alice -s       # HELLO, ALICE!
+php app help greet           # auto generated usage output
+```
+
+`run()` is invoked automatically. The `Console` parses argv for you: everything before the first option is available via `getArgument()`, and `--option=value` or `-o value` style options via `getOption()`. Commands can also declare `setAliases()` to be reachable by multiple names and `setGroup()` to organize them in the `index` listing.
+
 ## Installation
 ```bash
 composer require webisters/cli
