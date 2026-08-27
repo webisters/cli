@@ -574,6 +574,54 @@ class CLI
     }
 
     /**
+     * Prompt a question with a masked answer.
+     *
+     * Instead of disabling the terminal echo like secret(), each typed
+     * character is echoed as the given mask character. On Windows or when
+     * the required POSIX functions are unavailable, input is still read
+     * normally and simply not echoed.
+     *
+     * @param string $question The question to prompt
+     * @param string $mask The character echoed for each typed character
+     *
+     * @return string The masked answer
+     */
+    public static function masked(string $question, string $mask = '*') : string
+    {
+        $question .= ': ';
+        \fwrite(\STDOUT, $question);
+        if (static::isWindows() || !\function_exists('shell_exec')) {
+            return \trim((string) \fgets(\STDIN));
+        }
+        @\shell_exec('stty -echo');
+        $answer = '';
+        try {
+            while (true) {
+                $char = \fgetc(\STDIN);
+                if ($char === false || $char === "\n") {
+                    break;
+                }
+                if ($char === "\r") {
+                    // consume the \n that follows on Windows-style line endings
+                    \fgetc(\STDIN);
+                    break;
+                }
+                if ($char === "\x7f" || $char === '\\b') {
+                    $answer = \substr($answer, 0, -1);
+                    \fwrite(\STDOUT, '\\b \\b');
+                    continue;
+                }
+                $answer .= $char;
+                \fwrite(\STDOUT, $mask);
+            }
+            \fwrite(\STDOUT, \PHP_EOL);
+            return $answer;
+        } finally {
+            @\shell_exec('stty echo');
+        }
+    }
+
+    /**
      * Creates a well formatted table.
      *
      * @param array<array<Stringable|scalar>> $tbody Table body rows
