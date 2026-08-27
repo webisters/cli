@@ -62,6 +62,7 @@ class Console
             $this->setLanguage($language);
         }
         global $argv;
+        // @phpstan-ignore-next-line nullCoalesce.variable
         $this->prepare($argv ?? []);
         $this->setDefaultCommands();
     }
