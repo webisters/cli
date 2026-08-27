@@ -574,6 +574,61 @@ class CLI
     }
 
     /**
+     * Prompt a question with a masked answer.
+     *
+     * Instead of disabling the terminal echo like secret(), each typed
+     * character is echoed as the given mask character. On Windows or when
+     * the required POSIX functions are unavailable, input is still read
+     * normally and simply not echoed.
+     *
+     * @param string $question The question to prompt
+     * @param string $mask The character echoed for each typed character
+     *
+     * @return string The masked answer
+     */
+    public static function masked(string $question, string $mask = '*') : string
+    {
+        $question .= ': ';
+        \fwrite(\STDOUT, $question);
+        if (static::isWindows()
+            || !\function_exists('shell_exec')
+            || !\function_exists('stream_isatty')
+            || !\stream_isatty(\STDIN)
+        ) {
+            // Without an interactive TTY the echo cannot be controlled,
+            // so fall back to a plain line read.
+            return \trim((string) \fgets(\STDIN));
+        }
+        @\shell_exec('stty -echo 2>/dev/null');
+        $answer = '';
+        try {
+            while (true) {
+                $char = \fgetc(\STDIN);
+                $code = $char === false ? 0 : \ord($char);
+                if ($char === false || $code === 10) {
+                    break;
+                }
+                if ($code === 13) {
+                    // consume the \n that follows on Windows-style line endings
+                    \fgetc(\STDIN);
+                    break;
+                }
+                if ($code === 127 || $code === 8) {
+                    $answer = \substr($answer, 0, -1);
+                    \fwrite(\STDOUT, \chr(8) . ' ' . \chr(8));
+                    continue;
+                }
+                $answer .= $char;
+                \fwrite(\STDOUT, $mask);
+            }
+            \fwrite(\STDOUT, \PHP_EOL);
+            return $answer;
+        } finally {
+            @\shell_exec('stty echo 2>/dev/null');
+        }
+    }
+
+    /**
      * Creates a well formatted table.
      *
      * @param array<array<Stringable|scalar>> $tbody Table body rows
