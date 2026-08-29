@@ -13,6 +13,7 @@ use Framework\CLI\CLI;
 use Framework\CLI\Command;
 use Framework\CLI\Streams\Stderr;
 use Framework\CLI\Streams\Stdout;
+use Framework\Language\Language;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -91,6 +92,42 @@ final class ValidationTest extends TestCase
         $this->console->addCommand($command);
         $this->console->exec('validated 42');
         self::assertStringContainsString('option "count" is required', Stderr::getContents());
+    }
+
+    public function testValidationErrorsAreTranslatedToSpanish() : void
+    {
+        $console = new ConsoleMock(new Language('es'));
+        $command = new ValidatedCommandMock($console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'required' => true],
+        ]);
+        $command->setOptionDefinitions([
+            'count' => ['type' => 'int', 'required' => true],
+        ]);
+        $console->addCommand($command);
+        $console->exec('validated');
+        self::assertStringContainsString('argumento "0" es obligatorio.', Stderr::getContents());
+        self::assertStringContainsString('opción "count" es obligatorio.', Stderr::getContents());
+        $console->exec('validated abc');
+        self::assertStringContainsString('argumento "0" debe ser del tipo int.', Stderr::getContents());
+    }
+
+    public function testValidationErrorsAreTranslatedToBrazilianPortuguese() : void
+    {
+        $console = new ConsoleMock(new Language('pt-br'));
+        $command = new ValidatedCommandMock($console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'required' => true],
+        ]);
+        $command->setOptionDefinitions([
+            'count' => ['type' => 'int', 'required' => true],
+        ]);
+        $console->addCommand($command);
+        $console->exec('validated');
+        self::assertStringContainsString('argumento "0" é obrigatório.', Stderr::getContents());
+        self::assertStringContainsString('opção "count" é obrigatório.', Stderr::getContents());
+        $console->exec('validated abc');
+        self::assertStringContainsString('argumento "0" deve ser do tipo int.', Stderr::getContents());
     }
 
     public function testGettersReturnTheDefinitions() : void
