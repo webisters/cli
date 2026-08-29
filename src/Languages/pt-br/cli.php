@@ -16,6 +16,7 @@ return [
     'about.line5' => 'Obrigado por usar o Webisters!',
     'availableCommands' => 'Comandos Disponíveis',
     'aliases' => 'Aliases',
+    'argument' => 'argumento',
     'command' => 'Comando',
     'commandNotFound' => 'Comando não encontrado: "{0}"',
     'commands' => 'Comandos',
@@ -30,6 +31,9 @@ return [
     'index.description' => 'Mostra a lista de comandos.',
     'index.option.greet' => 'Mostra saudação.',
     'noDescription' => 'Este comando não fornece uma descrição.',
+    'option' => 'opção',
     'options' => 'Opções',
     'usage' => 'Uso',
+    'validation.required' => '{0} "{1}" é obrigatório.',
+    'validation.type' => '{0} "{1}" deve ser do tipo {2}.',
 ];
