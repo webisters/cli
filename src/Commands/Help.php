@@ -103,7 +103,8 @@ class Help extends Command
         );
         $lastKey = \array_key_last($definitions);
         foreach ($definitions as $position => $definition) {
-            CLI::write('  ' . $position . '  ' . $this->describeDefinition($definition));
+            $label = $this->definitionLabel($position, $definition);
+            CLI::write('  ' . $label . '  ' . $this->describeDefinition($definition));
             $raw = $definition['description'] ?? null;
             $description = \is_string($raw) ? \trim($raw) : '';
             if ($description !== '') {
