@@ -27,9 +27,10 @@ The abstract base class for every console command. Extend it and implement `run(
 ### `Framework\CLI\Console`
 Discovers, registers and runs commands:
 - `addCommand()` / `addCommands()` accept Command instances or class names
-- `run()` parses argv, matches the requested command (including aliases) and dispatches to `exec()`
-- Unknown commands fall back to `Index` (which lists available commands) and suggest the closest matching command name
+- `run()` parses argv, matches the requested command (including aliases) and dispatches it
+- Unknown commands print an error and exit 1, suggesting the closest matching command name when there is a close match
 - `getArgument()`, `getArguments()`, `getOption()` and `getOptions()` expose the parsed command line
+- `exec()` re-parses a command string and then calls `run()`
 
 ## Output and Color Helpers
 
@@ -58,16 +59,22 @@ Colors and formats can be passed as enum cases or as plain strings, for example 
 
 ```php
 CLI::success('Task completed');  // green
-CLI::info('Just so you know');   // blue
+CLI::info('Just so you know');   // cyan
 CLI::error('Something broke');   // red, then exits with code 1
 ```
 
 ### Reading input
 
 ```php
-$name    = CLI::getInput('Name: ');
-$answer  = CLI::prompt('Continue?', ['y', 'n']); // repeats until a valid option is given
+// prompt() prints the question and reads a line; options are shown as hints
+// and the first option is used as the default when the user presses Enter
+$answer  = CLI::prompt('Continue?', ['y', 'n']);
 $token   = CLI::secret('Token: ');               // hidden input
+
+// getInput() reads a line without printing anything. The $prepend argument
+// is used internally for backslash line continuation and is prefixed to the
+// returned value, not displayed.
+$line = CLI::getInput();
 ```
 
 ### Live output
@@ -137,7 +144,7 @@ php app greet Alice -s       # HELLO, ALICE!
 php app help greet           # auto generated usage output
 ```
 
-`run()` is invoked automatically. The `Console` parses argv for you: everything before the first option is available via `getArgument()`, and `--option=value` or `-o value` style options via `getOption()`. Commands can also declare `setAliases()` to be reachable by multiple names and `setGroup()` to organize them in the `index` listing.
+`run()` is invoked automatically. The `Console` parses argv for you: everything before the first option is available via `getArgument()`. Only long options carry a value (`--option=value`); short options like `-o` are always boolean flags, so `-o value` sets `o` to `true` and pushes `value` into the arguments. Commands can also declare `setAliases()` to be reachable by multiple names and `setGroup()` to organize them in the `index` listing.
 
 ## Installation
 ```bash
