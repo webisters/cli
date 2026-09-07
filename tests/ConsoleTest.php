@@ -597,4 +597,47 @@ final class ConsoleTest extends TestCase
         self::assertSame(1, $this->console->run());
         self::assertSame(1, $this->console->getExitCode());
     }
+    public function testThrownExceptionIsReportedOnStderr() : void
+    {
+        Stderr::reset();
+        Stderr::init();
+        $this->console->addCommand(new ThrowingCommandMock($this->console));
+        $this->console->prepare(['file.php', 'thrower']);
+        self::assertSame(7, $this->console->run());
+        self::assertStringContainsString('boom', Stderr::getContents());
+        Stderr::reset();
+    }
+
+    public function testDebugModeRevealsClassAndTrace() : void
+    {
+        Stderr::reset();
+        Stderr::init();
+        $this->console->addCommand(new ThrowingCommandMock($this->console));
+        $this->console->setDebug(true);
+        $this->console->prepare(['file.php', 'thrower']);
+        $this->console->run();
+        self::assertStringContainsString('RuntimeException', Stderr::getContents());
+        self::assertStringContainsString('#0', Stderr::getContents());
+        $this->console->setDebug(false);
+        Stderr::reset();
+    }
+
+    public function testExceptionHandlerBypassesDefaultRendering() : void
+    {
+        Stderr::reset();
+        Stderr::init();
+        $caught = null;
+        $this->console->setExceptionHandler(static function (\Throwable $exception) use (&$caught) : void {
+            $caught = $exception;
+        });
+        $this->console->addCommand(new ThrowingCommandMock($this->console));
+        $this->console->prepare(['file.php', 'thrower']);
+        self::assertSame(1, $this->console->run());
+        self::assertNotNull($caught);
+        self::assertSame('boom', $caught->getMessage());
+        self::assertStringNotContainsString('boom', Stderr::getContents());
+        $this->console->setExceptionHandler(null);
+        Stderr::reset();
+    }
+
 }
