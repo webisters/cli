@@ -28,6 +28,13 @@ class CLI
     protected static string $reset = "\033[0m";
 
     /**
+     * The style codes used by strlen(), built once from the style enums.
+     *
+     * @var array<int,string>
+     */
+    protected static array $styleCodes = [];
+
+    /**
      * Tells if ANSI escape sequences are enabled.
      */
     protected static bool $ansi = true;
@@ -184,18 +191,25 @@ class CLI
      */
     public static function strlen(string $text) : int
     {
-        $codes = [];
-        foreach (ForegroundColor::cases() as $case) {
-            $codes[] = $case->getCode();
+        if (static::$styleCodes === []) {
+            $codes = [];
+            foreach (ForegroundColor::cases() as $case) {
+                $codes[] = $case->getCode();
+            }
+            foreach (BackgroundColor::cases() as $case) {
+                $codes[] = $case->getCode();
+            }
+            foreach (Format::cases() as $case) {
+                $codes[] = $case->getCode();
+            }
+            $codes[] = static::$reset;
+            static::$styleCodes = $codes;
         }
-        foreach (BackgroundColor::cases() as $case) {
-            $codes[] = $case->getCode();
-        }
-        foreach (Format::cases() as $case) {
-            $codes[] = $case->getCode();
-        }
-        $codes[] = static::$reset;
-        $text = \str_replace($codes, '', $text);
+        $text = \str_replace(static::$styleCodes, '', $text);
+        // Strip any other escape sequence (256 color, true color, hyperlinks,
+        // cursor moves, ...) so invisible bytes are not counted as characters.
+        $text = \preg_replace("/\x1b\\[[0-9;]*[A-Za-z]/", '', $text) ?? '';
+        $text = \preg_replace("/\x1b\\][^\x07]*?(?:\x07|\x1b\\\\)/", '', $text) ?? '';
         return \mb_strlen($text);
     }
 

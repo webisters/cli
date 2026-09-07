@@ -229,6 +229,19 @@ final class CLITest extends TestCase
         CLI::style('foo', null, null, [Format::bold, 'bar']);
     }
 
+    public function testStrlenStripsArbitraryAnsiSequences() : void
+    {
+        self::assertSame(7, CLI::strlen('orange!'));
+        // Library colors are stripped as before.
+        self::assertSame(3, CLI::strlen("\033[0;31mred\033[0m"));
+        // 256 color sequences are stripped too.
+        self::assertSame(6, CLI::strlen("\033[38;5;208morange\033[0m"));
+        // OSC hyperlinks are not counted.
+        self::assertSame(6, CLI::strlen("\033]8;;https://example.com\033\\orange\033]8;;\033\\"));
+        // Plain text without escapes is unchanged.
+        self::assertSame(7, CLI::strlen('orange!'));
+    }
+
     public function testBox() : void
     {
         CLI::box('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam'
