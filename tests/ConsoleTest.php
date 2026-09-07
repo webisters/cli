@@ -392,6 +392,22 @@ final class ConsoleTest extends TestCase
         CLI::setQuiet(false);
     }
 
+    public function testQuietOptionIsScopedToTheDispatch() : void
+    {
+        CLI::setQuiet(false);
+        $this->console->exec('index --quiet');
+        self::assertFalse(CLI::isQuiet());
+        $this->console->exec('index');
+        self::assertFalse(CLI::isQuiet());
+    }
+
+    public function testShortQuietOptionIsScopedToTheDispatch() : void
+    {
+        CLI::setQuiet(false);
+        $this->console->exec('index -q');
+        self::assertFalse(CLI::isQuiet());
+    }
+
     public function testNoAnsiOption() : void
     {
         CLI::setAnsi(true);
@@ -403,5 +419,12 @@ final class ConsoleTest extends TestCase
         self::assertFalse(CLI::supportsAnsi());
         self::assertArrayNotHasKey('no-ansi', $this->console->getOptions());
         CLI::setAnsi(true);
+    }
+
+    public function testNoAnsiOptionIsScopedToTheDispatch() : void
+    {
+        CLI::setAnsi(true);
+        $this->console->exec('index --no-ansi');
+        self::assertTrue(CLI::isAnsi());
     }
 }

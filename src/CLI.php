@@ -82,6 +82,20 @@ class CLI
     }
 
     /**
+     * Tells if ANSI escape sequences are enabled.
+     *
+     * Unlike supportsAnsi(), the raw flag is returned without consulting the
+     * terminal, so the value set by setAnsi() can be restored.
+     *
+     * @return bool
+     */
+    #[Pure]
+    public static function isAnsi() : bool
+    {
+        return static::$ansi;
+    }
+
+    /**
      * Enable or disable quiet mode.
      *
      * @param bool $quiet Whether to suppress normal output

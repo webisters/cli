@@ -50,6 +50,16 @@ class Console
      * The Language instance.
      */
     protected Language $language;
+    /**
+     * Quiet state captured in prepare() before the console wide flags were
+     * applied, restored when the dispatch finishes.
+     */
+    protected bool $previousQuiet = false;
+    /**
+     * ANSI state captured in prepare() before the console wide flags were
+     * applied, restored when the dispatch finishes.
+     */
+    protected bool $previousAnsi = true;
 
     /**
      * Console constructor.
@@ -283,6 +293,19 @@ class Console
      */
     public function run() : void
     {
+        try {
+            $this->dispatch();
+        } finally {
+            CLI::setQuiet($this->previousQuiet);
+            CLI::setAnsi($this->previousAnsi);
+        }
+    }
+
+    /**
+     * Dispatch the current command.
+     */
+    protected function dispatch() : void
+    {
         if ($this->command === '') {
             $this->command = 'index';
         }
@@ -443,6 +466,8 @@ class Console
             //$endOptions = true;
             $this->arguments[] = $value;
         }
+        $this->previousQuiet = CLI::isQuiet();
+        $this->previousAnsi = CLI::isAnsi();
         $this->applyGlobalOptions();
     }
 
