@@ -34,13 +34,16 @@ final class CLITest extends TestCase
     public function testWrite() : void
     {
         CLI::write('Hello!');
-        self::assertSame("Hello!\n", Stdout::getContents());
+        self::assertSame('Hello!' . \PHP_EOL, Stdout::getContents());
         Stdout::reset();
         CLI::write('Hello!', ForegroundColor::red);
         self::assertStringContainsString("\033[0;31mHello!", Stdout::getContents());
         Stdout::reset();
         CLI::write('Hello!', null, null, 2);
-        self::assertSame("He\nll\no!\n", Stdout::getContents());
+        self::assertSame(
+            'He' . \PHP_EOL . 'll' . \PHP_EOL . 'o!' . \PHP_EOL,
+            Stdout::getContents()
+        );
     }
 
     public function testBeep() : void
@@ -76,7 +79,7 @@ final class CLITest extends TestCase
 
     public function testIsWindows() : void
     {
-        self::assertFalse(CLI::isWindows());
+        self::assertSame(\DIRECTORY_SEPARATOR === '\\', CLI::isWindows());
     }
 
     /**
@@ -88,9 +91,11 @@ final class CLITest extends TestCase
     protected function getTerminalWidth() : int
     {
         $expected = 80;
-        $width = (int) \shell_exec('tput cols');
-        if ($width) {
-            $expected = $width;
+        if (\DIRECTORY_SEPARATOR !== '\\') {
+            $width = (int) \shell_exec('tput cols');
+            if ($width) {
+                $expected = $width;
+            }
         }
         return $expected;
     }
