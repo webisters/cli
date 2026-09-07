@@ -141,6 +141,38 @@ class Console
     }
 
     /**
+     * Set an argument value.
+     *
+     * Used by Command::applyDefaults() to fill in definition defaults.
+     *
+     * @param int $position Argument position, starting from zero
+     * @param string $value The argument value
+     *
+     * @return static
+     */
+    public function setArgument(int $position, string $value) : static
+    {
+        $this->arguments[$position] = $value;
+        return $this;
+    }
+
+    /**
+     * Set an option value.
+     *
+     * Used by Command::applyDefaults() to fill in definition defaults.
+     *
+     * @param string $name The option name
+     * @param bool|string $value The option value
+     *
+     * @return static
+     */
+    public function setOption(string $name, bool | string $value) : static
+    {
+        $this->options[$name] = $value;
+        return $this;
+    }
+
+    /**
      * Set the Language instance.
      *
      * @param Language|null $language
@@ -324,6 +356,7 @@ class Console
             $this->validationFailed($errors);
             return;
         }
+        $command->applyDefaults($this);
         $command->run();
     }
 

@@ -342,6 +342,36 @@ abstract class Command
     }
 
     /**
+     * Apply definition defaults to the console.
+     *
+     * Any defined argument or option that was not passed on the command line
+     * and declares a "default" key gets its default written back into the
+     * Console, so getArgument() and getOption() return the resolved value.
+     * Values are stored as strings (or booleans for flags) because the
+     * Console accessors are typed that way.
+     *
+     * @param Console $console The console the command is running on
+     */
+    public function applyDefaults(Console $console) : void
+    {
+        $arguments = $console->getArguments();
+        foreach ($this->argumentDefinitions as $key => $definition) {
+            $default = $definition['default'] ?? null;
+            if (!\array_key_exists($key, $arguments) && \is_scalar($default)) {
+                $console->setArgument((int) $key, (string) $default);
+            }
+        }
+        $options = $console->getOptions();
+        foreach ($this->optionDefinitions as $key => $definition) {
+            $default = $definition['default'] ?? null;
+            if (\array_key_exists($key, $options) || !\is_scalar($default)) {
+                continue;
+            }
+            $console->setOption((string) $key, \is_bool($default) ? $default : (string) $default);
+        }
+    }
+
+    /**
      * Validate a set of values against their definitions.
      *
      * @param array<int|string,array<string,mixed>> $definitions
