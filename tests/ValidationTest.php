@@ -215,6 +215,63 @@ final class ValidationTest extends TestCase
         self::assertSame('5', $this->console->getOption('count'));
     }
 
+    public function testNamedArgumentIsUsedInErrorMessages() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['name' => 'environment', 'type' => 'int', 'required' => true],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated');
+        self::assertStringContainsString('argument "environment" is required', Stderr::getContents());
+        self::assertStringNotContainsString('"0"', Stderr::getContents());
+    }
+
+    public function testNamedArgumentTypeErrorsUseTheName() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['name' => 'retries', 'type' => 'int'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated abc');
+        self::assertStringContainsString('argument "retries" must be of type int', Stderr::getContents());
+    }
+
+    public function testNamedOptionIsUsedInErrorMessages() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setOptionDefinitions([
+            'count' => ['name' => 'attempts', 'type' => 'int', 'required' => true],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated 42');
+        self::assertStringContainsString('option "attempts" is required', Stderr::getContents());
+    }
+
+    public function testNamedArgumentInTranslatedErrors() : void
+    {
+        $console = new ConsoleMock(new Language('pt-br'));
+        $command = new ValidatedCommandMock($console);
+        $command->setArgumentDefinitions([
+            0 => ['name' => 'ambiente', 'type' => 'int', 'required' => true],
+        ]);
+        $console->addCommand($command);
+        $console->exec('validated');
+        self::assertStringContainsString('argumento "ambiente" é obrigatório.', Stderr::getContents());
+    }
+
+    public function testMissingNameFallsBackToTheKey() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'required' => true],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated');
+        self::assertStringContainsString('argument "0" is required', Stderr::getContents());
+    }
+
     public function testApplyDefaultsDirectlyFillsTheConsole() : void
     {
         $command = new ValidatedCommandMock($this->console);

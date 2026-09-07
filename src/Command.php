@@ -54,7 +54,7 @@ abstract class Command
      * Argument definitions.
      *
      * @var array<int,array<string,mixed>> Definitions keyed by position, each
-     * with optional "type", "required" and "default" keys
+     * with optional "name", "type", "required", "default" and "description" keys
      */
     protected array $argumentDefinitions = [];
     /**
@@ -388,12 +388,13 @@ abstract class Command
             $label = $translator->render('cli', $label, []);
         }
         foreach ($definitions as $key => $definition) {
+            $displayName = $this->definitionLabel($key, $definition);
             $value = $values[$key] ?? null;
             if ($value === null || $value === false) {
                 if (!empty($definition['required'])) {
                     $errors[] = $translator
-                        ? $translator->render('cli', 'validation.required', [$label, (string) $key])
-                        : $label . ' "' . $key . '" is required.';
+                        ? $translator->render('cli', 'validation.required', [$label, $displayName])
+                        : $label . ' "' . $displayName . '" is required.';
                 }
                 continue;
             }
@@ -409,8 +410,8 @@ abstract class Command
                     // A boolean (true) means the option was passed without a
                     // value, which is only valid for "flag" definitions
                     $errors[] = $translator
-                        ? $translator->render('cli', 'validation.type', [$label, (string) $key, $type])
-                        : $label . ' "' . $key . '" must be of type ' . $type . '.';
+                        ? $translator->render('cli', 'validation.type', [$label, $displayName, $type])
+                        : $label . ' "' . $displayName . '" must be of type ' . $type . '.';
                 }
                 continue;
             }
@@ -422,11 +423,30 @@ abstract class Command
             };
             if (!$valid) {
                 $errors[] = $translator
-                    ? $translator->render('cli', 'validation.type', [$label, (string) $key, $type])
-                    : $label . ' "' . $key . '" must be of type ' . $type . '.';
+                    ? $translator->render('cli', 'validation.type', [$label, $displayName, $type])
+                    : $label . ' "' . $displayName . '" must be of type ' . $type . '.';
             }
         }
         return $errors;
+    }
+
+    /**
+     * Resolve the display label of a definition: its "name" when given,
+     * otherwise the array key (the argument position or option name).
+     *
+     * @param int|string $key The definition key
+     * @param array<string,mixed> $definition The definition
+     *
+     * @return string
+     */
+    #[Pure]
+    protected function definitionLabel(int | string $key, array $definition) : string
+    {
+        $name = $definition['name'] ?? null;
+        if (\is_string($name) && $name !== '') {
+            return $name;
+        }
+        return (string) $key;
     }
 
     /**
