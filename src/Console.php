@@ -365,28 +365,6 @@ class Console
     }
 
     /**
-     * List the short and long option names a command declares for itself.
-     *
-     * @param Command $command The command to inspect
-     *
-     * @return array<int,string> Names without their leading dashes
-     */
-    #[Pure]
-    protected static function declaredOptionNames(Command $command) : array
-    {
-        $names = [];
-        foreach (\array_keys($command->getOptions()) as $key) {
-            foreach (\explode(',', (string) $key) as $part) {
-                $names[] = \ltrim(\trim($part), '-');
-            }
-        }
-        foreach (\array_keys($command->getOptionDefinitions()) as $key) {
-            $names[] = \ltrim(\trim((string) $key), '-');
-        }
-        return $names;
-    }
-
-    /**
      * Handle an unknown command by reporting it and suggesting the closest
      * registered command when there is a close match.
      *
@@ -528,6 +506,28 @@ class Console
             CLI::setQuiet(true);
             unset($this->options['quiet'], $this->options['q']);
         }
+    }
+
+    /**
+     * List the short and long option names a command declares for itself.
+     *
+     * @param Command $command The command to inspect
+     *
+     * @return array<int,string> Names without their leading dashes
+     */
+    #[Pure]
+    protected static function declaredOptionNames(Command $command) : array
+    {
+        $names = [];
+        foreach (\array_keys($command->getOptions()) as $key) {
+            foreach (\explode(',', (string) $key) as $part) {
+                $names[] = \ltrim(\trim($part), '-');
+            }
+        }
+        foreach (\array_keys($command->getOptionDefinitions()) as $key) {
+            $names[] = \ltrim(\trim((string) $key), '-');
+        }
+        return $names;
     }
 
     /**

@@ -420,7 +420,7 @@ final class ConsoleTest extends TestCase
 
     public function testAutoHelpWithArgumentsShowsCommandHelp() : void
     {
-        $this->console->addCommand(new \Tests\CLI\Commands\Host($this->console));
+        $this->console->addCommand(new Commands\Host($this->console));
         Stderr::reset();
         $this->console->prepare([
             'file.php',
@@ -439,7 +439,7 @@ final class ConsoleTest extends TestCase
 
     public function testCommandDeclaringHReceivesShortOption() : void
     {
-        $this->console->addCommand(new \Tests\CLI\Commands\Host($this->console));
+        $this->console->addCommand(new Commands\Host($this->console));
         $this->console->prepare([
             'file.php',
             'host',
@@ -455,7 +455,7 @@ final class ConsoleTest extends TestCase
 
     public function testAutoHelpUsesRegisteredHelpCommand() : void
     {
-        $this->console->addCommand(new class ($this->console) extends Command {
+        $this->console->addCommand(new class($this->console) extends Command {
             protected string $name = 'help';
 
             public function run() : void
