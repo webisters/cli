@@ -523,4 +523,36 @@ final class ConsoleTest extends TestCase
         $this->console->exec('index --no-ansi');
         self::assertTrue(CLI::isAnsi());
     }
+
+    public function testHelpShowsArgumentAndOptionDefinitions() : void
+    {
+        $command = new CommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'required' => true, 'description' => 'The record id'],
+        ]);
+        $command->setOptionDefinitions([
+            'count' => ['type' => 'int', 'default' => 5, 'description' => 'How many records'],
+        ]);
+        $this->console->addCommand($command);
+        Stdout::reset();
+        $this->console->exec('test --help');
+        $contents = Stdout::getContents();
+        self::assertStringContainsString('Arguments', $contents);
+        self::assertStringContainsString('The record id.', $contents);
+        self::assertStringContainsString('Options', $contents);
+        self::assertStringContainsString('--count', $contents);
+        self::assertStringContainsString('required, int', $contents);
+        self::assertStringContainsString('default "5"', $contents);
+        self::assertStringContainsString('How many records.', $contents);
+    }
+
+    public function testHelpFallsBackToLegacyOptionsMap() : void
+    {
+        $this->console->addCommand(new CommandMock($this->console));
+        Stdout::reset();
+        $this->console->exec('test --help');
+        $contents = Stdout::getContents();
+        self::assertStringContainsString('Options', $contents);
+        self::assertStringContainsString('foo bar', $contents);
+    }
 }

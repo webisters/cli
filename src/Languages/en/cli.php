@@ -16,6 +16,7 @@ return [
     'about.line5' => 'Thanks for using Webisters!',
     'aliases' => 'Aliases',
     'argument' => 'argument',
+    'arguments' => 'Arguments',
     'availableCommands' => 'Available Commands',
     'command' => 'Command',
     'commandNotFound' => 'Command not found: "{0}"',

@@ -17,6 +17,7 @@ return [
     'availableCommands' => 'Comandos Disponíveis',
     'aliases' => 'Aliases',
     'argument' => 'argumento',
+    'arguments' => 'Argumentos',
     'command' => 'Comando',
     'commandNotFound' => 'Comando não encontrado: "{0}"',
     'commands' => 'Comandos',

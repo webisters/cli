@@ -82,39 +82,154 @@ class Help extends Command
                 ForegroundColor::green
             ) . $value);
         }
-        $value = $command->getOptions();
-        if ($value) {
-            CLI::write(
-                $this->console->getLanguage()->render('cli', 'options') . ': ',
-                ForegroundColor::green
-            );
-            $newOptions = [];
-            foreach ($value as $options => $description) {
-                $options = $this->sortOptions($options);
-                $newOptions[$options] = $description;
+        $this->showArguments($command);
+        $this->showOptions($command);
+    }
+
+    /**
+     * Print the Arguments block from the command definitions.
+     *
+     * @param Command $command The command being documented
+     */
+    protected function showArguments(Command $command) : void
+    {
+        $definitions = $command->getArgumentDefinitions();
+        if (!$definitions) {
+            return;
+        }
+        CLI::write(
+            $this->console->getLanguage()->render('cli', 'arguments') . ':',
+            ForegroundColor::green
+        );
+        $lastKey = \array_key_last($definitions);
+        foreach ($definitions as $position => $definition) {
+            CLI::write('  ' . $position . '  ' . $this->describeDefinition($definition));
+            $raw = $definition['description'] ?? null;
+            $description = \is_string($raw) ? \trim($raw) : '';
+            if ($description !== '') {
+                CLI::write('  ' . $this->finishSentence($description));
             }
-            \ksort($newOptions);
-            $lastKey = \array_key_last($newOptions);
-            foreach ($newOptions as $option => $description) {
-                CLI::write('  ' . $this->setColor($option));
-                $description = \trim($description);
-                if (!\str_ends_with($description, '.')) {
-                    $description .= '.';
-                }
-                CLI::write('  ' . $description);
-                if ($option !== $lastKey) {
-                    CLI::newLine();
-                }
+            if ($position !== $lastKey) {
+                CLI::newLine();
+            }
+        }
+        CLI::newLine();
+    }
+
+    /**
+     * Print the Options block, derived from the option definitions when the
+     * command declares them and completed with the legacy free text options
+     * map for entries that are not covered by a definition.
+     *
+     * @param Command $command The command being documented
+     */
+    protected function showOptions(Command $command) : void
+    {
+        $definitions = $command->getOptionDefinitions();
+        $legacy = $command->getOptions();
+        if (!$definitions && !$legacy) {
+            return;
+        }
+        CLI::write(
+            $this->console->getLanguage()->render('cli', 'options') . ':',
+            ForegroundColor::green
+        );
+        $entries = [];
+        foreach ($definitions as $key => $definition) {
+            $raw = $definition['description'] ?? null;
+            $description = \is_string($raw) ? \trim($raw) : '';
+            if ($description === '') {
+                $description = \trim((string) ($this->findLegacyDescription((string) $key, $legacy) ?? ''));
+            }
+            $entries[$this->formatOptionKey((string) $key)] = [
+                'meta' => $this->describeDefinition($definition),
+                'description' => $description,
+            ];
+        }
+        foreach ($legacy as $key => $description) {
+            $display = $this->formatOptionKey((string) $key);
+            if (!\array_key_exists($display, $entries)) {
+                $entries[$display] = [
+                    'meta' => '',
+                    'description' => \trim((string) $description),
+                ];
+            }
+        }
+        \ksort($entries);
+        $lastKey = \array_key_last($entries);
+        foreach ($entries as $option => $entry) {
+            CLI::write('  ' . $this->setColor($option));
+            if ($entry['meta'] !== '') {
+                CLI::write('  ' . $entry['meta']);
+            }
+            if ($entry['description'] !== '') {
+                CLI::write('  ' . $this->finishSentence($entry['description']));
+            }
+            if ($option !== $lastKey) {
+                CLI::newLine();
             }
         }
     }
 
-    protected function sortOptions(string $text) : string
+    /**
+     * Build the meta description of a definition, like
+     * "required, int, default \"5\"".
+     *
+     * @param array<string,mixed> $definition The argument or option definition
+     */
+    protected function describeDefinition(array $definition) : string
     {
-        $cleaned = \preg_replace('/\s+/', '', $text);
-        $text = \explode(',', \is_string($cleaned) ? $cleaned : '');
-        \sort($text);
-        return \implode(',', $text);
+        $parts = [!empty($definition['required']) ? 'required' : 'optional'];
+        $type = $definition['type'] ?? 'string';
+        if (\is_string($type) && $type !== '') {
+            $parts[] = $type;
+        }
+        $default = $definition['default'] ?? null;
+        if (\is_scalar($default)) {
+            $parts[] = 'default ' . (\is_bool($default)
+                ? ($default ? 'true' : 'false')
+                : '"' . $default . '"');
+        }
+        return \implode(', ', $parts);
+    }
+
+    /**
+     * Normalize an option key for display, adding dashes to definition keys
+     * and keeping legacy keys as they were written.
+     */
+    protected function formatOptionKey(string $key) : string
+    {
+        if ($key !== '' && $key[0] === '-') {
+            return $key;
+        }
+        return \strlen($key) > 1 ? '--' . $key : '-' . $key;
+    }
+
+    /**
+     * Find the legacy free text description of a definition key.
+     *
+     * @param array<string,bool|string> $legacy The legacy options map
+     */
+    protected function findLegacyDescription(string $key, array $legacy) : ?string
+    {
+        foreach ([$key, '-' . $key, '--' . $key] as $candidate) {
+            if (\array_key_exists($candidate, $legacy)) {
+                $value = $legacy[$candidate];
+                return \is_bool($value) ? '' : $value;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Make sure a description ends with a sentence dot.
+     */
+    protected function finishSentence(string $description) : string
+    {
+        if (!\str_ends_with($description, '.')) {
+            $description .= '.';
+        }
+        return $description;
     }
 
     protected function setColor(string $text) : string
