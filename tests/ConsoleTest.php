@@ -418,6 +418,63 @@ final class ConsoleTest extends TestCase
         self::assertStringContainsString('Usage', Stdout::getContents());
     }
 
+    public function testAutoHelpWithArgumentsShowsCommandHelp() : void
+    {
+        $this->console->addCommand(new \Tests\CLI\Commands\Host($this->console));
+        Stderr::reset();
+        $this->console->prepare([
+            'file.php',
+            'host',
+            '0.0.0.0',
+            '--help',
+        ]);
+        $this->console->run();
+        $output = Stdout::getContents();
+        self::assertStringContainsString('host', $output);
+        self::assertStringNotContainsString(
+            'Command not found',
+            Stderr::getContents()
+        );
+    }
+
+    public function testCommandDeclaringHReceivesShortOption() : void
+    {
+        $this->console->addCommand(new \Tests\CLI\Commands\Host($this->console));
+        $this->console->prepare([
+            'file.php',
+            'host',
+            '-h',
+            '0.0.0.0',
+        ]);
+        $this->console->run();
+        $output = Stdout::getContents();
+        self::assertStringContainsString('host: 1', $output);
+        self::assertStringContainsString('host value: 0.0.0.0', $output);
+        self::assertStringNotContainsString('Usage', $output);
+    }
+
+    public function testAutoHelpUsesRegisteredHelpCommand() : void
+    {
+        $this->console->addCommand(new class ($this->console) extends Command {
+            protected string $name = 'help';
+
+            public function run() : void
+            {
+                CLI::write('custom help called');
+            }
+        });
+        $this->console->prepare([
+            'file.php',
+            'index',
+            '--help',
+        ]);
+        $this->console->run();
+        self::assertStringContainsString(
+            'custom help called',
+            Stdout::getContents()
+        );
+    }
+
     public function testQuietOption() : void
     {
         CLI::setQuiet(false);
