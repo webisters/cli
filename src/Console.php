@@ -371,12 +371,12 @@ class Console
     }
 
     /**
-     * Suggest the closest registered command name to a given input using the
-     * Levenshtein distance, or null when no match is close enough.
+     * Suggest the closest active command name or alias to a given input using
+     * the Levenshtein distance, or null when no match is close enough.
      *
      * @param string $command The unknown command name
      *
-     * @return string|null The closest command name or null
+     * @return string|null The closest command name, alias or null
      */
     #[Pure]
     protected function suggestCommand(string $command) : ?string
@@ -384,10 +384,17 @@ class Console
         if ($command === '') {
             return null;
         }
+        $candidates = [];
+        foreach (static::getCommands() as $name => $activeCommand) {
+            $candidates[] = $name;
+            foreach ($activeCommand->getAliases() as $alias) {
+                $candidates[] = $alias;
+            }
+        }
         $threshold = (int) \strlen($command) / 4 + 1;
         $best = null;
         $bestDistance = $threshold + 1;
-        foreach (\array_keys($this->commands) as $candidate) {
+        foreach ($candidates as $candidate) {
             $distance = \levenshtein($command, $candidate);
             if ($distance < $bestDistance) {
                 $bestDistance = $distance;
