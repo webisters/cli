@@ -70,6 +70,10 @@ abstract class Command
      * Tells if command is active.
      */
     protected bool $active = true;
+    /**
+     * The exit code the command wants the process to use.
+     */
+    protected int $exitCode = 0;
 
     /**
      * Command constructor.
@@ -447,6 +451,35 @@ abstract class Command
             return $name;
         }
         return (string) $key;
+    }
+
+    /**
+     * Get the exit code the command wants the process to use.
+     *
+     * Returns 0 unless the command called setExitCode() during run().
+     *
+     * @return int
+     */
+    #[Pure]
+    public function getExitCode() : int
+    {
+        return $this->exitCode;
+    }
+
+    /**
+     * Set the exit code the process should use after this command runs.
+     *
+     * Lets a command fail, or succeed with a specific code, without writing
+     * to STDERR or terminating the process itself.
+     *
+     * @param int $code The exit code, 0 means success
+     *
+     * @return static
+     */
+    public function setExitCode(int $code) : static
+    {
+        $this->exitCode = $code;
+        return $this;
     }
 
     /**

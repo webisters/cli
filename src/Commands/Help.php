@@ -44,6 +44,7 @@ class Help extends Command
     {
         $command = $this->console->getCommand($commandName);
         if ($command === null) {
+            $this->setExitCode(1);
             CLI::error(
                 $this->console->getLanguage()->render('cli', 'commandNotFound', [$commandName]),
                 \defined('TESTING') ? null : 1
