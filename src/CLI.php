@@ -217,9 +217,6 @@ class CLI
         BackgroundColor | string | null $background = null,
         array $formats = []
     ) : string {
-        if (!static::supportsAnsi()) {
-            return $text;
-        }
         $string = '';
         if ($color !== null) {
             $string = \is_string($color)
@@ -237,6 +234,9 @@ class CLI
                     ? Format::from($format)->getCode()
                     : $format->getCode();
             }
+        }
+        if (!static::supportsAnsi()) {
+            return $text;
         }
         $string .= $text . static::$reset;
         return $string;

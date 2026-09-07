@@ -200,6 +200,17 @@ final class CLITest extends TestCase
         CLI::style('foo', 'bar');
     }
 
+    public function testStyleValidatesEvenWhenAnsiIsDisabled() : void
+    {
+        CLI::setAnsi(false);
+        try {
+            $this->expectException(\ValueError::class);
+            CLI::style('foo', 'bar');
+        } finally {
+            CLI::setAnsi(true);
+        }
+    }
+
     public function testStyleWithInvalidBackground() : void
     {
         $this->expectException(\ValueError::class);
