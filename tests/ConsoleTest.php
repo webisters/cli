@@ -597,6 +597,7 @@ final class ConsoleTest extends TestCase
         self::assertSame(1, $this->console->run());
         self::assertSame(1, $this->console->getExitCode());
     }
+
     public function testThrownExceptionIsReportedOnStderr() : void
     {
         Stderr::reset();
@@ -639,5 +640,4 @@ final class ConsoleTest extends TestCase
         $this->console->setExceptionHandler(null);
         Stderr::reset();
     }
-
 }
