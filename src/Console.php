@@ -47,6 +47,14 @@ class Console
      */
     protected array $arguments = [];
     /**
+     * The input tokens left after the script name and the command name were
+     * taken out, kept so the options can be parsed again once the command,
+     * and with it the option definitions, is known.
+     *
+     * @var array<int,string>
+     */
+    protected array $tokens = [];
+    /**
      * The Language instance.
      */
     protected Language $language;
@@ -432,6 +440,7 @@ class Console
             $this->commandNotFound($this->command);
             return $this->exitCode;
         }
+        $this->reparseWithOptions($command);
         $errors = $command->validate($this->arguments, $this->options);
         if ($errors !== []) {
             $this->validationFailed($errors);
@@ -592,6 +601,7 @@ class Console
         $this->command = '';
         $this->options = [];
         $this->arguments = [];
+        $this->tokens = [];
     }
 
     /**
@@ -604,9 +614,13 @@ class Console
      * [command] [options] -- [arguments]
      * Short option: -l, -la === l = true, a = true
      * Long option: --list, --all=vertical === list = true, all = vertical
-     * Only Long Options receive values:
+     * Options always receive values with an equal sign:
      * --foo=bar or --f=bar - "foo" and "f" are bar
      * -foo=bar or -f=bar - all characters are true (f, o, =, b, a, r)
+     * An option the command declares in its option definitions with a type
+     * other than "flag" also receives the next token as value, so -o value
+     * and --opt value work. Options without a definition stay true.
+     * A token that is a negative number, like -5, is an argument.
      * After -- all values are arguments, also if is prefixed with -
      * Without --, arguments and options can be mixed: -ls foo -x abc --a=e.
      *
@@ -620,13 +634,32 @@ class Console
             $this->command = $argumentValues[1];
             unset($argumentValues[1]);
         }
+        $this->tokens = \array_values($argumentValues);
+        $this->parseTokens();
+        $this->previousQuiet = CLI::isQuiet();
+        $this->previousAnsi = CLI::isAnsi();
+        $this->applyGlobalOptions();
+    }
+
+    /**
+     * Parse the prepared tokens into options and arguments.
+     *
+     * @param array<int,string> $valueOptions Names of the options that take
+     * the next token as their value
+     */
+    protected function parseTokens(array $valueOptions = []) : void
+    {
+        $this->options = [];
+        $this->arguments = [];
         $endOptions = false;
-        foreach ($argumentValues as $value) {
+        $total = \count($this->tokens);
+        for ($index = 0; $index < $total; $index++) {
+            $value = $this->tokens[$index];
             if ($endOptions === false && $value === '--') {
                 $endOptions = true;
                 continue;
             }
-            if ($endOptions === false && $value !== '' && $value[0] === '-') {
+            if ($endOptions === false && static::isOptionToken($value)) {
                 if (isset($value[1]) && $value[1] === '-') {
                     $option = \substr($value, 2);
                     if (\str_contains($option, '=')) {
@@ -634,10 +667,25 @@ class Console
                         $this->options[$option] = $value;
                         continue;
                     }
+                    if (\in_array($option, $valueOptions, true)
+                        && $this->hasValueAt($index + 1)) {
+                        $index++;
+                        $this->options[$option] = $this->tokens[$index];
+                        continue;
+                    }
                     $this->options[$option] = true;
                     continue;
                 }
-                foreach (\str_split(\substr($value, 1)) as $item) {
+                $items = \str_split(\substr($value, 1));
+                $lastItem = \array_key_last($items);
+                foreach ($items as $position => $item) {
+                    if ($position === $lastItem
+                        && \in_array($item, $valueOptions, true)
+                        && $this->hasValueAt($index + 1)) {
+                        $index++;
+                        $this->options[$item] = $this->tokens[$index];
+                        continue;
+                    }
                     $this->options[$item] = true;
                 }
                 continue;
@@ -645,9 +693,38 @@ class Console
             //$endOptions = true;
             $this->arguments[] = $value;
         }
-        $this->previousQuiet = CLI::isQuiet();
-        $this->previousAnsi = CLI::isAnsi();
+    }
+
+    /**
+     * Parse the options again now that the command, and with it the option
+     * definitions telling which options take a value, is known.
+     *
+     * @param Command $command The command about to be dispatched
+     */
+    protected function reparseWithOptions(Command $command) : void
+    {
+        $valueOptions = static::valueOptionNames($command);
+        if ($valueOptions === []) {
+            return;
+        }
+        $this->parseTokens($valueOptions);
         $this->applyGlobalOptions();
+    }
+
+    /**
+     * Tells if the token at a given position can be taken as an option value.
+     *
+     * @param int $index The token position
+     *
+     * @return bool False when there is no token left or the token is itself
+     * an option or the end of options marker
+     */
+    #[Pure]
+    protected function hasValueAt(int $index) : bool
+    {
+        return isset($this->tokens[$index])
+            && $this->tokens[$index] !== '--'
+            && !static::isOptionToken($this->tokens[$index]);
     }
 
     /**
@@ -664,6 +741,43 @@ class Console
             CLI::setQuiet(true);
             unset($this->options['quiet'], $this->options['q']);
         }
+    }
+
+    /**
+     * Tells if a token is an option and not an argument.
+     *
+     * A negative number is an argument, so -5 can be passed without the --
+     * end of options marker.
+     *
+     * @param string $token The input token
+     *
+     * @return bool
+     */
+    #[Pure]
+    protected static function isOptionToken(string $token) : bool
+    {
+        return $token !== '' && $token[0] === '-' && !\is_numeric($token);
+    }
+
+    /**
+     * List the option names a command declares with a type other than "flag",
+     * which are the ones able to take the next token as their value.
+     *
+     * @param Command $command The command to inspect
+     *
+     * @return array<int,string> Names without their leading dashes
+     */
+    #[Pure]
+    protected static function valueOptionNames(Command $command) : array
+    {
+        $names = [];
+        foreach ($command->getOptionDefinitions() as $key => $definition) {
+            if (($definition['type'] ?? 'string') === 'flag') {
+                continue;
+            }
+            $names[] = \ltrim(\trim((string) $key), '-');
+        }
+        return $names;
     }
 
     /**
