@@ -35,9 +35,10 @@ class CLI
     protected static array $styleCodes = [];
 
     /**
-     * Tells if ANSI escape sequences are enabled.
+     * ANSI mode override set by setAnsi(). Null means "not explicitly set",
+     * so automatic detection applies.
      */
-    protected static bool $ansi = true;
+    protected static ?bool $ansiOverride = null;
 
     /**
      * Tells if normal output should be suppressed.
@@ -58,12 +59,24 @@ class CLI
     /**
      * Tells if the current terminal likely supports ANSI escape sequences.
      *
+     * An explicit setAnsi() call wins, then the FORCE_COLOR and NO_COLOR
+     * conventions, then the TTY check, then the per platform detection.
+     *
      * @return bool
      */
-    #[Pure]
     public static function supportsAnsi() : bool
     {
-        if (!static::$ansi) {
+        $override = static::$ansiOverride;
+        if ($override !== null) {
+            return $override;
+        }
+        $environment = static::colorEnvironment();
+        if ($environment !== null) {
+            return $environment;
+        }
+        // Redirected or piped output is not a terminal: never emit escape
+        // sequences there.
+        if (\function_exists('stream_isatty') && !\stream_isatty(\STDOUT)) {
             return false;
         }
         // Windows 10+ supports ANSI in most terminals.
@@ -72,20 +85,42 @@ class CLI
                 || \getenv('WT_SESSION') !== false
                 || \getenv('TERM_PROGRAM') === 'vscode'
                 || (\function_exists('sapi_windows_vt100_support')
-                    && sapi_windows_vt100_support(\STDOUT));
+                    && \sapi_windows_vt100_support(\STDOUT));
         }
 
         return true;
     }
 
     /**
+     * Read the FORCE_COLOR and NO_COLOR conventions.
+     *
+     * See https://no-color.org.
+     *
+     * @return bool|null True when colors are forced, false when they are
+     * disabled, null when neither variable is set
+     */
+    protected static function colorEnvironment() : ?bool
+    {
+        if (\getenv('FORCE_COLOR') !== false) {
+            return true;
+        }
+        if (\getenv('NO_COLOR') !== false) {
+            return false;
+        }
+        return null;
+    }
+
+    /**
      * Enable or disable ANSI escape sequences.
      *
-     * @param bool $enabled Whether to enable ANSI
+     * Pass null to go back to automatic detection (environment conventions,
+     * TTY check and platform detection).
+     *
+     * @param bool|null $enabled Whether to enable ANSI, or null for automatic
      */
-    public static function setAnsi(bool $enabled) : void
+    public static function setAnsi(?bool $enabled) : void
     {
-        static::$ansi = $enabled;
+        static::$ansiOverride = $enabled;
     }
 
     /**
@@ -99,7 +134,7 @@ class CLI
     #[Pure]
     public static function isAnsi() : bool
     {
-        return static::$ansi;
+        return static::$ansiOverride ?? true;
     }
 
     /**
@@ -399,7 +434,7 @@ class CLI
         if (!\function_exists('pcntl_signal')) {
             return false;
         }
-        return \pcntl_signal($signal, $handler, true);
+        return pcntl_signal($signal, $handler, true);
     }
 
     /**
@@ -414,7 +449,7 @@ class CLI
         if (!\defined('SIGINT')) {
             return false;
         }
-        return static::onSignal(\SIGINT, $handler);
+        return static::onSignal(SIGINT, $handler);
     }
 
     /**
@@ -429,7 +464,7 @@ class CLI
         if (!\function_exists('pcntl_signal')) {
             return false;
         }
-        return \pcntl_signal($signal, \SIG_DFL);
+        return pcntl_signal($signal, SIG_DFL);
     }
 
     /**
