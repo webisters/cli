@@ -15,6 +15,7 @@ return [
     'about.line4' => 'Visit our website to know more: https://webisters.com',
     'about.line5' => 'Thanks for using Webisters!',
     'aliases' => 'Aliases',
+    'argument' => 'argument',
     'availableCommands' => 'Available Commands',
     'command' => 'Command',
     'commandNotFound' => 'Command not found: "{0}"',
@@ -30,6 +31,9 @@ return [
     'index.description' => 'Shows commands list.',
     'index.option.greet' => 'Shows greeting.',
     'noDescription' => 'This command does not provide a description.',
+    'option' => 'option',
     'options' => 'Options',
     'usage' => 'Usage',
+    'validation.required' => '{0} "{1}" is required.',
+    'validation.type' => '{0} "{1}" must be of type {2}.',
 ];

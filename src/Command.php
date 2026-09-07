@@ -348,15 +348,20 @@ abstract class Command
      *
      * @return array<int,string>
      */
-    #[Pure]
     protected function validateDefinitions(array $definitions, array $values, string $label) : array
     {
         $errors = [];
+        $translator = isset($this->console) ? $this->console->getLanguage() : null;
+        if ($translator) {
+            $label = $translator->render('cli', $label, []);
+        }
         foreach ($definitions as $key => $definition) {
             $value = $values[$key] ?? null;
             if ($value === null || $value === false) {
                 if (!empty($definition['required'])) {
-                    $errors[] = $label . ' "' . $key . '" is required.';
+                    $errors[] = $translator
+                        ? $translator->render('cli', 'validation.required', [$label, (string) $key])
+                        : $label . ' "' . $key . '" is required.';
                 }
                 continue;
             }
@@ -374,7 +379,9 @@ abstract class Command
                 default => true,
             };
             if (!$valid) {
-                $errors[] = $label . ' "' . $key . '" must be of type ' . $type . '.';
+                $errors[] = $translator
+                    ? $translator->render('cli', 'validation.type', [$label, (string) $key, $type])
+                    : $label . ' "' . $key . '" must be of type ' . $type . '.';
             }
         }
         return $errors;
