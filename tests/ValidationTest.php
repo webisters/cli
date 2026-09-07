@@ -173,4 +173,59 @@ final class ValidationTest extends TestCase
         self::assertSame([0 => ['type' => 'int']], $command->getArgumentDefinitions());
         self::assertSame(['count' => ['type' => 'int']], $command->getOptionDefinitions());
     }
+
+    public function testDefaultArgumentIsAppliedWhenMissing() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'default' => '7'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated');
+        self::assertSame('7', $this->console->getArgument(0));
+        self::assertStringContainsString('ran', Stdout::getContents());
+    }
+
+    public function testDefaultOptionIsAppliedWhenMissing() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setOptionDefinitions([
+            'count' => ['type' => 'int', 'default' => '3'],
+            'verbose' => ['type' => 'flag', 'default' => true],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated');
+        self::assertSame('3', $this->console->getOption('count'));
+        self::assertTrue($this->console->getOption('verbose'));
+        self::assertStringContainsString('ran', Stdout::getContents());
+    }
+
+    public function testPassedValuesAreNotOverriddenByDefaults() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'default' => '7'],
+        ]);
+        $command->setOptionDefinitions([
+            'count' => ['type' => 'int', 'default' => '3'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated 42 --count=5');
+        self::assertSame('42', $this->console->getArgument(0));
+        self::assertSame('5', $this->console->getOption('count'));
+    }
+
+    public function testApplyDefaultsDirectlyFillsTheConsole() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['default' => 'fallback'],
+        ]);
+        $command->setOptionDefinitions([
+            'name' => ['default' => 'cli'],
+        ]);
+        $command->applyDefaults($this->console);
+        self::assertSame('fallback', $this->console->getArgument(0));
+        self::assertSame('cli', $this->console->getOption('name'));
+    }
 }
