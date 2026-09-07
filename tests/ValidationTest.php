@@ -94,6 +94,41 @@ final class ValidationTest extends TestCase
         self::assertStringContainsString('option "count" is required', Stderr::getContents());
     }
 
+    public function testTypedOptionWithoutValueReportsAnError() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setOptionDefinitions([
+            'limit' => ['type' => 'int'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated 5 --limit');
+        self::assertStringContainsString('option "limit" must be of type int', Stderr::getContents());
+        self::assertStringNotContainsString('ran', Stdout::getContents());
+    }
+
+    public function testFlagOptionAllowsBeingPassedWithoutValue() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setOptionDefinitions([
+            'all' => ['type' => 'flag'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated 5 --all');
+        self::assertStringContainsString('ran', Stdout::getContents());
+        self::assertTrue($this->console->getOption('all'));
+    }
+
+    public function testTypedOptionWithValueStillValidates() : void
+    {
+        $command = new ValidatedCommandMock($this->console);
+        $command->setOptionDefinitions([
+            'limit' => ['type' => 'int'],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->exec('validated 5 --limit=abc');
+        self::assertStringContainsString('option "limit" must be of type int', Stderr::getContents());
+    }
+
     public function testValidationErrorsAreTranslatedToSpanish() : void
     {
         $console = new ConsoleMock(new Language('es'));

@@ -61,7 +61,9 @@ abstract class Command
      * Option definitions.
      *
      * @var array<string,array<string,mixed>> Definitions keyed by option name,
-     * each with optional "type", "required" and "default" keys
+     * each with optional "type" ("string", "int", "float", "numeric" or
+     * "flag"), "required" and "default" keys. Only options declared as
+     * "flag" accept being passed without a value
      */
     protected array $optionDefinitions = [];
     /**
@@ -369,7 +371,17 @@ abstract class Command
             if (!\is_string($type)) {
                 $type = 'string';
             }
-            if ($type === 'string' || !\is_string($value)) {
+            if ($type === 'flag') {
+                continue;
+            }
+            if (!\is_string($value) || $type === 'string') {
+                if (!\is_string($value)) {
+                    // A boolean (true) means the option was passed without a
+                    // value, which is only valid for "flag" definitions
+                    $errors[] = $translator
+                        ? $translator->render('cli', 'validation.type', [$label, (string) $key, $type])
+                        : $label . ' "' . $key . '" must be of type ' . $type . '.';
+                }
                 continue;
             }
             $valid = match ($type) {
