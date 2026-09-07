@@ -414,7 +414,7 @@ class Console
     {
         $this->reset();
         unset($argumentValues[0]);
-        if (isset($argumentValues[1]) && $argumentValues[1][0] !== '-') {
+        if (isset($argumentValues[1]) && $argumentValues[1] !== '' && $argumentValues[1][0] !== '-') {
             $this->command = $argumentValues[1];
             unset($argumentValues[1]);
         }
@@ -424,7 +424,7 @@ class Console
                 $endOptions = true;
                 continue;
             }
-            if ($endOptions === false && $value[0] === '-') {
+            if ($endOptions === false && $value !== '' && $value[0] === '-') {
                 if (isset($value[1]) && $value[1] === '-') {
                     $option = \substr($value, 2);
                     if (\str_contains($option, '=')) {
