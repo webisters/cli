@@ -22,6 +22,8 @@ final class CLITest extends TestCase
     protected function setUp() : void
     {
         Stdout::init();
+        CLI::setAnsi(true);
+        CLI::setQuiet(false);
     }
 
     protected function tearDown() : void
@@ -264,6 +266,58 @@ final class CLITest extends TestCase
         CLI::beep(2);
         self::assertSame('', Stdout::getContents());
         CLI::setQuiet(false);
+    }
+
+public function testNoColorVariableDisablesAnsi() : void
+{
+        self::assertFalse(\getenv('NO_COLOR'));
+        try {
+            \putenv('NO_COLOR=1');
+            CLI::setAnsi(null);
+            self::assertFalse(CLI::supportsAnsi());
+        } finally {
+            \putenv('NO_COLOR');
+            CLI::setAnsi(true);
+        }
+    }
+
+    public function testForceColorVariableEnablesAnsi() : void
+    {
+        self::assertFalse(\getenv('FORCE_COLOR'));
+        try {
+            \putenv('FORCE_COLOR=1');
+            CLI::setAnsi(null);
+            self::assertTrue(CLI::supportsAnsi());
+        } finally {
+            \putenv('FORCE_COLOR');
+            CLI::setAnsi(true);
+        }
+    }
+
+    public function testForceColorWinsOverNoColor() : void
+    {
+        try {
+            \putenv('NO_COLOR=1');
+            \putenv('FORCE_COLOR=1');
+            CLI::setAnsi(null);
+            self::assertTrue(CLI::supportsAnsi());
+        } finally {
+            \putenv('NO_COLOR');
+            \putenv('FORCE_COLOR');
+            CLI::setAnsi(true);
+        }
+    }
+
+    public function testExplicitSetAnsiWinsOverEnvironment() : void
+    {
+        try {
+            \putenv('NO_COLOR=1');
+            CLI::setAnsi(true);
+            self::assertTrue(CLI::supportsAnsi());
+        } finally {
+            \putenv('NO_COLOR');
+            CLI::setAnsi(true);
+        }
     }
 
     public function testNoAnsi() : void
