@@ -52,6 +52,28 @@ final class ConsoleTest extends TestCase
         self::assertSame([], $this->console->getArguments());
     }
 
+    public function testEmptyArgumentDoesNotWarn() : void
+    {
+        $this->console->prepare([
+            'file.php',
+            'command',
+            '',
+        ]);
+        self::assertSame('command', $this->console->command);
+        self::assertSame([
+            '',
+        ], $this->console->getArguments());
+    }
+
+    public function testExecWithTrailingSpaceKeepsEmptyArgument() : void
+    {
+        $this->console->addCommand(new CommandMock($this->console));
+        $this->console->exec('test ');
+        self::assertSame([
+            '',
+        ], $this->console->getArguments());
+    }
+
     public function testCommandLine() : void
     {
         $this->console->prepare([
