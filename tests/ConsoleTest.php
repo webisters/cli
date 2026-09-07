@@ -300,6 +300,45 @@ final class ConsoleTest extends TestCase
         self::assertStringNotContainsString('Did you mean', Stderr::getContents());
     }
 
+    public function testNoSuggestionForDeactivatedCommand() : void
+    {
+        $ghost = new class($this->console) extends CommandMock {
+            protected string $name = 'ghost';
+        };
+        $ghost->deactivate();
+        $this->console->addCommand($ghost);
+        $this->console->prepare([
+            'file.php',
+            'ghos',
+        ]);
+        Stderr::reset();
+        Stderr::init();
+        $this->console->run();
+        self::assertStringContainsString(
+            'Command not found: "ghos"',
+            Stderr::getContents()
+        );
+        self::assertStringNotContainsString('Did you mean', Stderr::getContents());
+    }
+
+    public function testSuggestsClosestAlias() : void
+    {
+        $command = new CommandMock($this->console);
+        $command->setAliases(['list']);
+        $this->console->addCommand($command);
+        $this->console->prepare([
+            'file.php',
+            'lst',
+        ]);
+        Stderr::reset();
+        Stderr::init();
+        $this->console->run();
+        self::assertStringContainsString(
+            'Did you mean "ls"?',
+            Stderr::getContents()
+        );
+    }
+
     protected function getContentsOfCommandMock() : string
     {
         return \print_r(['option' => 'foo', 'o' => 1], true) . \PHP_EOL
