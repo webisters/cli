@@ -65,6 +65,17 @@ class Console
      * command was not found or failed validation.
      */
     protected int $exitCode = 0;
+    /**
+     * When true, escaped exceptions are rendered with the class name and
+     * a stack trace instead of just the message.
+     */
+    protected bool $debug = false;
+    /**
+     * Optional application supplied handler for uncaught command exceptions.
+     *
+     * @var callable(\Throwable):void|null
+     */
+    protected $exceptionHandler;
 
     /**
      * Console constructor.
@@ -356,6 +367,50 @@ class Console
     }
 
     /**
+     * Enable or disable debug rendering of uncaught command exceptions.
+     *
+     * When enabled, escaped exceptions are rendered with their class name and
+     * a full stack trace instead of just the message.
+     *
+     * @param bool $debug True to enable debug rendering
+     *
+     * @return static
+     */
+    public function setDebug(bool $debug) : static
+    {
+        $this->debug = $debug;
+        return $this;
+    }
+
+    /**
+     * Tell whether debug rendering of uncaught exceptions is enabled.
+     *
+     * @return bool
+     */
+    #[Pure]
+    public function isDebug() : bool
+    {
+        return $this->debug;
+    }
+
+    /**
+     * Register an application handler for uncaught command exceptions.
+     *
+     * The handler receives the Throwable and is responsible for any logging
+     * or rendering the application needs. When set, it runs before the
+     * library's own error output, which is then skipped.
+     *
+     * @param callable(\Throwable):void|null $handler The handler or null to clear it
+     *
+     * @return static
+     */
+    public function setExceptionHandler(?callable $handler) : static
+    {
+        $this->exceptionHandler = $handler;
+        return $this;
+    }
+
+    /**
      * Dispatch the current command and return its exit code.
      *
      * @return int The process exit code, 0 means success
@@ -383,8 +438,48 @@ class Console
             return $this->exitCode;
         }
         $command->applyDefaults($this);
-        $command->run();
+        try {
+            $command->run();
+        } catch (\Throwable $exception) {
+            return $this->handleException($exception);
+        }
         $this->exitCode = $command->getExitCode();
+        return $this->exitCode;
+    }
+
+    /**
+     * Handle an exception that escaped the dispatched command.
+     *
+     * If an application exception handler is registered it is invoked and the
+     * library renders nothing. Otherwise the message is printed in red on
+     * STDERR, with the class name and stack trace added in debug mode, and a
+     * non zero exit code is reported.
+     *
+     * @param \Throwable $exception The uncaught exception
+     *
+     * @return int The process exit code
+     */
+    protected function handleException(\Throwable $exception) : int
+    {
+        if ($this->exceptionHandler !== null) {
+            ($this->exceptionHandler)($exception);
+            $this->exitCode = 1;
+            return $this->exitCode;
+        }
+        $exitCode = (int) $exception->getCode();
+        if ($exitCode < 1 || $exitCode > 254) {
+            $exitCode = 1;
+        }
+        $message = $exception->getMessage();
+        if ($this->debug) {
+            $message = \get_class($exception) . ': ' . $message
+                . \PHP_EOL . $exception->getTraceAsString();
+        }
+        CLI::error(
+            CLI::style($message, ForegroundColor::brightRed),
+            \defined('TESTING') ? null : $exitCode
+        );
+        $this->exitCode = $exitCode;
         return $this->exitCode;
     }
 
