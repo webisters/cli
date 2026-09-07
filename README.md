@@ -144,7 +144,23 @@ php app greet Alice -s       # HELLO, ALICE!
 php app help greet           # auto generated usage output
 ```
 
-`run()` is invoked automatically. The `Console` parses argv for you: everything before the first option is available via `getArgument()`. Only long options carry a value (`--option=value`); short options like `-o` are always boolean flags, so `-o value` sets `o` to `true` and pushes `value` into the arguments. Commands can also declare `setAliases()` to be reachable by multiple names and `setGroup()` to organize them in the `index` listing.
+`run()` is invoked automatically. The `Console` parses argv for you: positional values are available via `getArgument()` and options via `getOption()`.
+
+An option always takes a value written with an equal sign, as in `--option=value`. It also takes the next token, as in `-o value` and `--option value`, when the command declares that option in `$optionDefinitions` with a type other than `flag`:
+
+```php
+protected array $optionDefinitions = [
+    'h' => ['type' => 'string', 'description' => 'The host to bind.'],
+    'port' => ['type' => 'int', 'default' => 8080],
+    'v' => ['type' => 'flag'],
+];
+```
+
+```bash
+php app serve -h 0.0.0.0 --port 8080   # h => 0.0.0.0, port => 8080
+```
+
+An option with no definition, or one defined as a `flag`, is set to `true` and the next token becomes an argument. A negative number such as `-5` is read as an argument, so it does not need the `--` end of options marker. Commands can also declare `setAliases()` to be reachable by multiple names and `setGroup()` to organize them in the `index` listing.
 
 ## Installation
 ```bash
