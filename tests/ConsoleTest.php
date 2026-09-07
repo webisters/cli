@@ -555,4 +555,46 @@ final class ConsoleTest extends TestCase
         self::assertStringContainsString('Options', $contents);
         self::assertStringContainsString('foo bar', $contents);
     }
+
+    public function testSuccessfulCommandExitsWithZero() : void
+    {
+        $this->console->addCommand(new QuitterCommandMock($this->console));
+        $this->console->prepare(['file.php', 'quitter', '0']);
+        self::assertSame(0, $this->console->run());
+        self::assertSame(0, $this->console->getExitCode());
+    }
+
+    public function testCommandCanDecideTheExitCode() : void
+    {
+        $this->console->addCommand(new QuitterCommandMock($this->console));
+        $this->console->prepare(['file.php', 'quitter', '2']);
+        self::assertSame(2, $this->console->run());
+        self::assertSame(2, $this->console->getExitCode());
+    }
+
+    public function testUnknownCommandYieldsExitCodeOne() : void
+    {
+        $this->console->prepare(['file.php', 'nope-nope-nope']);
+        self::assertSame(1, $this->console->run());
+        self::assertSame(1, $this->console->getExitCode());
+    }
+
+    public function testValidationFailureYieldsExitCodeOne() : void
+    {
+        $command = new CommandMock($this->console);
+        $command->setArgumentDefinitions([
+            0 => ['type' => 'int', 'required' => true],
+        ]);
+        $this->console->addCommand($command);
+        $this->console->prepare(['file.php', 'test', 'not-an-int']);
+        self::assertSame(1, $this->console->run());
+        self::assertSame(1, $this->console->getExitCode());
+    }
+
+    public function testHelpForUnknownCommandYieldsExitCodeOne() : void
+    {
+        $this->console->prepare(['file.php', 'help', 'nope-nope-nope']);
+        self::assertSame(1, $this->console->run());
+        self::assertSame(1, $this->console->getExitCode());
+    }
 }

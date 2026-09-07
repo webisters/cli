@@ -274,6 +274,9 @@ final class ValidationTest extends TestCase
 
     public function testApplyDefaultsDirectlyFillsTheConsole() : void
     {
+        // Reset the parsed command line so PHPUnit argv values cannot leak in
+        // and fill the argument slots before the defaults are applied.
+        $this->console->prepare(['phpunit']);
         $command = new ValidatedCommandMock($this->console);
         $command->setArgumentDefinitions([
             0 => ['default' => 'fallback'],

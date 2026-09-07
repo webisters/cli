@@ -60,6 +60,11 @@ class Console
      * applied, restored when the dispatch finishes.
      */
     protected bool $previousAnsi = true;
+    /**
+     * The exit code reported by the last dispatched command, or 1 when the
+     * command was not found or failed validation.
+     */
+    protected int $exitCode = 0;
 
     /**
      * Console constructor.
@@ -321,12 +326,18 @@ class Console
     }
 
     /**
-     * Run the Console.
+     * Run the Console and return the resulting exit code.
+     *
+     * The code comes from the dispatched Command via setExitCode(), or is 1
+     * when the command was not found or failed validation. Entry points can
+     * forward it to the process with exit($console->run()).
+     *
+     * @return int The process exit code, 0 means success
      */
-    public function run() : void
+    public function run() : int
     {
         try {
-            $this->dispatch();
+            return $this->dispatch();
         } finally {
             CLI::setQuiet($this->previousQuiet);
             CLI::setAnsi($this->previousAnsi);
@@ -334,30 +345,47 @@ class Console
     }
 
     /**
-     * Dispatch the current command.
+     * Get the exit code reported by the last dispatched command.
+     *
+     * @return int
      */
-    protected function dispatch() : void
+    #[Pure]
+    public function getExitCode() : int
     {
+        return $this->exitCode;
+    }
+
+    /**
+     * Dispatch the current command and return its exit code.
+     *
+     * @return int The process exit code, 0 means success
+     */
+    protected function dispatch() : int
+    {
+        $this->exitCode = 0;
         if ($this->command === '') {
             $this->command = 'index';
         }
         if ($this->isHelpRequested()) {
             $help = $this->getCommand('help') ?? new Help($this);
             $help->run();
-            return;
+            $this->exitCode = $help->getExitCode();
+            return $this->exitCode;
         }
         $command = $this->getCommand($this->command);
         if ($command === null) {
             $this->commandNotFound($this->command);
-            return;
+            return $this->exitCode;
         }
         $errors = $command->validate($this->arguments, $this->options);
         if ($errors !== []) {
             $this->validationFailed($errors);
-            return;
+            return $this->exitCode;
         }
         $command->applyDefaults($this);
         $command->run();
+        $this->exitCode = $command->getExitCode();
+        return $this->exitCode;
     }
 
     /**
@@ -367,6 +395,7 @@ class Console
      */
     protected function validationFailed(array $errors) : void
     {
+        $this->exitCode = 1;
         $message = \implode(\PHP_EOL, $errors);
         CLI::error(
             CLI::style($message, ForegroundColor::brightRed),
@@ -405,6 +434,7 @@ class Console
      */
     protected function commandNotFound(string $command) : void
     {
+        $this->exitCode = 1;
         $message = $this->getLanguage()->render('cli', 'commandNotFound', [$command]);
         $suggestion = $this->suggestCommand($command);
         if ($suggestion !== null && $suggestion !== $command) {
@@ -454,12 +484,12 @@ class Console
         return $best;
     }
 
-    public function exec(string $command) : void
+    public function exec(string $command) : int
     {
         $argumentValues = static::commandToArgs($command);
         \array_unshift($argumentValues, 'removed');
         $this->prepare($argumentValues);
-        $this->run();
+        return $this->run();
     }
 
     protected function reset() : void
