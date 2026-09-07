@@ -310,7 +310,8 @@ class Console
             $this->command = 'index';
         }
         if ($this->isHelpRequested()) {
-            (new Help($this))->run();
+            $help = $this->getCommand('help') ?? new Help($this);
+            $help->run();
             return;
         }
         $command = $this->getCommand($this->command);
@@ -347,6 +348,19 @@ class Console
      */
     protected function isHelpRequested() : bool
     {
+        $command = $this->getCommand($this->command);
+        if ($command !== null) {
+            $declared = static::declaredOptionNames($command);
+            if ($this->getOption('help') === true
+                && !\in_array('help', $declared, true)) {
+                return true;
+            }
+            if ($this->getOption('h') === true
+                && !\in_array('h', $declared, true)) {
+                return true;
+            }
+            return false;
+        }
         return $this->getOption('help') === true || $this->getOption('h') === true;
     }
 
@@ -492,6 +506,28 @@ class Console
             CLI::setQuiet(true);
             unset($this->options['quiet'], $this->options['q']);
         }
+    }
+
+    /**
+     * List the short and long option names a command declares for itself.
+     *
+     * @param Command $command The command to inspect
+     *
+     * @return array<int,string> Names without their leading dashes
+     */
+    #[Pure]
+    protected static function declaredOptionNames(Command $command) : array
+    {
+        $names = [];
+        foreach (\array_keys($command->getOptions()) as $key) {
+            foreach (\explode(',', (string) $key) as $part) {
+                $names[] = \ltrim(\trim($part), '-');
+            }
+        }
+        foreach (\array_keys($command->getOptionDefinitions()) as $key) {
+            $names[] = \ltrim(\trim((string) $key), '-');
+        }
+        return $names;
     }
 
     /**

@@ -28,6 +28,11 @@ class Help extends Command
         $commandName = $this->console->getArgument(0);
         if ($commandName === null || $commandName === '') {
             $commandName = $this->console->getCommandName();
+        } elseif (!$this->console->hasCommand($commandName)
+            && $this->console->getCommandName() !== 'help') {
+            // The help option was passed to a command that takes arguments,
+            // so the first argument is a value and not a command name.
+            $commandName = $this->console->getCommandName();
         }
         if ($commandName === '') {
             $commandName = 'help';
