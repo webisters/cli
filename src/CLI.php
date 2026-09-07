@@ -317,6 +317,9 @@ class CLI
      */
     public static function liveLine(string $text, bool $finalize = false) : void
     {
+        if (static::isQuiet()) {
+            return;
+        }
         // See: https://stackoverflow.com/a/35190285
         $string = '';
         if (static::supportsAnsi()) {
@@ -340,9 +343,6 @@ class CLI
     public static function progress(int $step, int $total, string $label = '') : void
     {
         if (static::isQuiet()) {
-            if ($step >= $total && $total > 0) {
-                \fwrite(\STDOUT, \PHP_EOL);
-            }
             return;
         }
         $percent = $total > 0 ? (int) \round($step / $total * 100) : 100;
@@ -362,9 +362,6 @@ class CLI
     public static function spinner(int $frame = 0, bool $finalize = false) : void
     {
         if (static::isQuiet()) {
-            if ($finalize) {
-                \fwrite(\STDOUT, \PHP_EOL);
-            }
             return;
         }
         if ($finalize) {
@@ -429,6 +426,9 @@ class CLI
      */
     public static function beep(int $times = 1, int $usleep = 0) : void
     {
+        if (static::isQuiet()) {
+            return;
+        }
         for ($i = 0; $i < $times; $i++) {
             \fwrite(\STDOUT, "\x07");
             \usleep($usleep);
@@ -496,6 +496,9 @@ class CLI
      */
     public static function clear() : void
     {
+        if (static::isQuiet()) {
+            return;
+        }
         if (static::supportsAnsi()) {
             \fwrite(\STDOUT, "\e[H\e[2J");
             return;
