@@ -231,6 +231,13 @@ final class CLITest extends TestCase
         CLI::write('Silenced!');
         CLI::newLine(2);
         CLI::table([[1, 'John']]);
+        CLI::progress(2, 4, 'Task');
+        CLI::progress(4, 4);
+        CLI::spinner(0);
+        CLI::spinner(0, true);
+        CLI::liveLine('working', true);
+        CLI::clear();
+        CLI::beep(2);
         self::assertSame('', Stdout::getContents());
         CLI::setQuiet(false);
     }
