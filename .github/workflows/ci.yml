@@ -9,14 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    name: test / php ${{ matrix.php }} / ${{ matrix.os }}
+  tests:
+    name: tests / php ${{ matrix.php }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        php: ['8.2', '8.3', '8.4']
+        php: ['8.2', '8.3', '8.4', '8.5']
     steps:
       - uses: actions/checkout@v4
       - name: Setup PHP
@@ -36,6 +36,27 @@ jobs:
           else
             echo "No PHPUnit config or binary found; nothing to test."
           fi
+
+  # The branch ruleset requires a status check named exactly "test". The matrix
+  # above publishes one context per leg, such as "tests / php 8.2 /
+  # ubuntu-latest", so a bare "test" never appeared and the required check
+  # could never be satisfied: merges only went through on an admin bypass.
+  # This job carries that name and fails unless every leg succeeded, so the
+  # ruleset gates on the real result and the supported versions can change
+  # without touching it.
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    needs: tests
+    if: always()
+    steps:
+      - name: Check matrix result
+        run: |
+          if [ "${{ needs.tests.result }}" != "success" ]; then
+            echo "One or more PHP versions failed: ${{ needs.tests.result }}"
+            exit 1
+          fi
+          echo "All supported PHP versions passed."
 
   lint:
     name: lint
